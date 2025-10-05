@@ -1,0 +1,35 @@
+[
+  {
+    "id": "sku-1001",
+    "name": "Kitsune Hoodie",
+    "sku": "KITS-HOOD-001",
+    "price": 49.0,
+    "image": "https://placehold.co/800x600/png",
+    "category": "Apparel",
+    "description": "Soft fleece hoodie with fox emblem.",
+    "active": true,
+    "payment_url": ""
+  },
+  {
+    "id": "sku-2001",
+    "name": "Logo Sticker Pack",
+    "sku": "KITS-STICK-001",
+    "price": 6.0,
+    "image": "https://placehold.co/600x600/png",
+    "category": "Stickers",
+    "description": "Matte vinyl sticker set.",
+    "active": true,
+    "payment_url": ""
+  },
+  {
+    "id": "sku-3001",
+    "name": "Bowling Jersey",
+    "sku": "KITS-JRSY-014",
+    "price": 64.0,
+    "image": "https://placehold.co/800x600/png",
+    "category": "Jerseys",
+    "description": "Customizable name and number.",
+    "active": true,
+    "payment_url": ""
+  }
+]

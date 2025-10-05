@@ -1,0 +1,13 @@
+{
+  "name": "kitsune-lite-storefront",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "sync:notion": "node scripts/notion_sync.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.14",
+    "dotenv": "^16.4.5"
+  }
+}

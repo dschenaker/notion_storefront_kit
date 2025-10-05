@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Storefront</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand" id="brand">Storefront</div>
+    <button id="cartBtn" class="cart-btn" aria-label="Open cart">🛒<span id="cartCount">0</span></button>
+  </header>
+
+  <main class="container">
+    <section class="controls">
+      <input id="searchInput" type="search" placeholder="Search products..." aria-label="Search products">
+      <select id="categorySelect" aria-label="Filter by category">
+        <option value="">All categories</option>
+      </select>
+      <select id="sortSelect" aria-label="Sort products">
+        <option value="name-asc">Name A→Z</option>
+        <option value="name-desc">Name Z→A</option>
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+      </select>
+    </section>
+
+    <section id="products" class="grid" aria-live="polite">
+      <!-- products injected here -->
+    </section>
+  </main>
+
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <div class="cart-header">
+      <h2>Your Cart</h2>
+      <button id="closeCart" class="close-btn" aria-label="Close cart">×</button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-footer">
+      <div class="cart-row">
+        <span>Subtotal</span>
+        <strong id="subtotal">$0.00</strong>
+      </div>
+      <div class="cart-actions">
+        <button id="downloadCsv">Download Order CSV</button>
+        <button id="copySummary">Copy Summary</button>
+        <button id="checkoutBtn" class="checkout">Checkout</button>
+      </div>
+      <small class="hint">100% static, free-hosted storefront. Payments handled via your chosen links or email.</small>
+    </div>
+  </aside>
+
+  <footer class="footer">
+    <small>Powered by Notion → GitHub Pages • Free & portable</small>
+  </footer>
+</body>
+</html>
