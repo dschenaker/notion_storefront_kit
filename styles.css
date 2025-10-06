@@ -37,7 +37,7 @@ body{
 .card{
   background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column
 }
-.card .imgwrap{background:#0a0e13; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center}
+.card .imgwrap{background:#0a0e13; aspect-ratio:4/3; display:flex; align-items:center; justify-content:center; position:relative}
 .card img{max-width:100%; max-height:100%; object-fit:cover}
 .card .body{padding:12px}
 .card h3{margin:0 0 6px 0; font-size:1rem}
@@ -46,6 +46,17 @@ body{
 .card .actions{display:flex; gap:8px; padding:12px}
 .card .actions button{flex:1; border:1px solid var(--border); background:#0f141b; color:var(--text); padding:10px; border-radius:10px; cursor:pointer}
 .card .actions button.primary{background:var(--brand); color:#051221; font-weight:700}
+
+/* NEW: optional logo chip on the image */
+.logo-badge{
+  position:absolute; top:8px; left:8px;
+  width:36px; height:36px; border-radius:8px;
+  border:1px solid var(--border);
+  background:#0f141b;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden
+}
+.logo-badge img{ width:100%; height:100%; object-fit:cover }
 
 .cart-drawer{
   position:fixed; top:0; right:0; width:min(420px,100%); height:100%; transform:translateX(100%);

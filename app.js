@@ -98,9 +98,10 @@
   function cardHTML(p){
     const price = p.price!=null ? `<div class="price">${fmt.format(p.price)}</div>` : '<span class="badge">Ask for price</span>';
     const sku = p.sku ? `<div class="sku">${escapeHtml(p.sku)}</div>` : '';
-    const img = p.image ? `<img alt="${escapeHtml(p.name)}" src="${escapeHtml(p.image)}">` : `<div class="badge">No Image</div>`;
+    const img  = p.image ? `<img alt="${escapeHtml(p.name)}" src="${escapeHtml(p.image)}">` : `<div class="badge">No Image</div>`;
+    const logo = p.logo  ? `<div class="logo-badge"><img alt="" src="${escapeHtml(p.logo)}"></div>` : '';
     return `<article class="card">
-      <div class="imgwrap">${img}</div>
+      <div class="imgwrap">${img}${logo}</div>
       <div class="body">
         <h3>${escapeHtml(p.name)}</h3>
         ${price}
@@ -187,7 +188,6 @@
   function checkout(){
     if(!cart.items.length){ alert('Cart is empty.'); return; }
     if(S.CHECKOUT_MODE==='links'){
-      // open first item's link as a simple demo
       const first = cart.items[0];
       const p = products.find(x=>x.id===first.id);
       if(p && p.payment_url){ window.open(p.payment_url, '_blank'); return; }
@@ -243,7 +243,7 @@
   function loadCart(){
     try{
       return JSON.parse(localStorage.getItem('cart_v1')||'{"items":[]}');
-    }catch{ return {items:[]}}
+    }catch{ return {items:[]} }
   }
   function persistCart(){
     localStorage.setItem('cart_v1', JSON.stringify(cart));
