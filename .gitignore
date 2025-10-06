@@ -1,7 +1,14 @@
 # never commit secrets or local env
 .env
+
+# deps & OS cruft
 node_modules/
 .DS_Store
+
+# local build/cache
 dist/
 tmp/
 .cache/
+
+# GitHub metadata (unless you really want Actions)
+.github/
