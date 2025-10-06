@@ -1,8 +1,12 @@
-// Basic store configuration — edit these to match your setup
 window.STORE = {
-  NAME: "Kitsune Lite Storefront",
+  NAME: "Kitsune Storefront",
   CURRENCY: "USD",
+  PRODUCTS_JSON: "data/products.json",
   CHECKOUT_MODE: "email", // "email" | "links"
-  ORDER_EMAIL: "orders@example.com", // where email checkout drafts are addressed
-  PRODUCTS_JSON: "data/products.json" // update to your built file path (Action will overwrite this file)
+  ORDER_EMAIL: "orders@example.com",
+
+  // NEW: where the "Sync Now" button should point
+  REPO_OWNER: "dschenaker",
+  REPO_NAME: "notion_storefront_kit",
+  WORKFLOW_FILE: "sync.yml" // .github/workflows/sync.yml (already in this repo)
 };

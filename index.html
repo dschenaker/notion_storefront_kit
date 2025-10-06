@@ -1,60 +1,76 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Storefront</title>
-  <link rel="stylesheet" href="styles.css">
-  <script defer src="config.js"></script>
-  <script defer src="app.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:,">
 </head>
 <body>
   <header class="topbar">
     <div class="brand" id="brand">Storefront</div>
-    <button id="cartBtn" class="cart-btn" aria-label="Open cart">🛒<span id="cartCount">0</span></button>
+    <nav class="nav">
+      <a href="#/">Shop</a>
+      <a href="#/brands">Brands</a>
+      <a href="#/about">About</a>
+      <a href="#/contact">Contact / Quote</a>
+    </nav>
+    <div class="top-actions">
+      <button id="themeToggle" class="btn-muted" title="Toggle theme">Theme</button>
+      <button id="syncBtn" class="btn-muted" title="Run Notion sync">Sync</button>
+      <button class="cart-btn" id="cartBtn">Cart <span id="cartCount">0</span></button>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="controls">
-      <input id="searchInput" type="search" placeholder="Search products..." aria-label="Search products">
-      <select id="categorySelect" aria-label="Filter by category">
-        <option value="">All categories</option>
-      </select>
-      <select id="sortSelect" aria-label="Sort products">
-        <option value="name-asc">Name A→Z</option>
-        <option value="name-desc">Name Z→A</option>
-        <option value="price-asc">Price ↑</option>
-        <option value="price-desc">Price ↓</option>
-      </select>
-    </section>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-header">
+        <input id="searchInput" class="input" placeholder="Search products…" />
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">Categories</div>
+        <div id="categoryList" class="chip-list"></div>
+      </div>
+      <div class="sb-section">
+        <div class="sb-title">Sort</div>
+        <select id="sortSelect" class="input">
+          <option value="">Featured</option>
+          <option value="name-asc">Name A→Z</option>
+          <option value="name-desc">Name Z→A</option>
+          <option value="price-asc">Price Low→High</option>
+          <option value="price-desc">Price High→Low</option>
+        </select>
+      </div>
+    </aside>
 
-    <section id="products" class="grid" aria-live="polite">
-      <!-- products injected here -->
-    </section>
-  </main>
+    <main class="content">
+      <section id="routeRoot" class="route"></section>
+    </main>
+  </div>
 
-  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+  <!-- Cart drawer -->
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
     <div class="cart-header">
-      <h2>Your Cart</h2>
-      <button id="closeCart" class="close-btn" aria-label="Close cart">×</button>
+      <strong>Your Cart</strong>
+      <button class="close-btn" id="closeCart">Close</button>
     </div>
     <div id="cartItems" class="cart-items"></div>
     <div class="cart-footer">
-      <div class="cart-row">
-        <span>Subtotal</span>
-        <strong id="subtotal">$0.00</strong>
-      </div>
+      <div class="cart-row"><span>Subtotal</span><strong id="subtotal">$0.00</strong></div>
       <div class="cart-actions">
-        <button id="downloadCsv">Download Order CSV</button>
-        <button id="copySummary">Copy Summary</button>
-        <button id="checkoutBtn" class="checkout">Checkout</button>
+        <button class="checkout" id="checkoutBtn">Checkout</button>
+        <button id="copySummary" class="btn-muted">Copy summary</button>
+        <button id="downloadCsv" class="btn-muted">Download CSV</button>
       </div>
-      <small class="hint">100% static, free-hosted storefront. Payments handled via your chosen links or email.</small>
     </div>
   </aside>
 
   <footer class="footer">
-    <small>Powered by Notion → GitHub Pages • Free & portable</small>
+    <span id="lastSynced"></span>
   </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
