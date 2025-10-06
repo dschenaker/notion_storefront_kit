@@ -1,24 +1,35 @@
-import 'dotenv/config';
+// @ts-nocheck
+import dotenv from 'dotenv';
 import { Client } from '@notionhq/client';
+dotenv.config({ override: true });
 
-const token = process.env.NOTION_TOKEN;
+const token  = process.env.NOTION_TOKEN || '';
 const claimed = (process.env.NOTION_DB_ID || '').trim();
 const notion = new Client({ auth: token });
 
-console.log('[DEBUG] token present:', !!token);
-console.log('[DEBUG] claimed DB id:', claimed);
+(async () => {
+  console.log('[DEBUG] token present:', !!token);
+  console.log('[DEBUG] claimed DB id:', claimed || '(none)');
 
-try {
-  // Try to retrieve the claimed DB first
-  const meta = await notion.databases.retrieve({ database_id: claimed });
-  console.log('[DEBUG] retrieve OK. Title:', meta?.title?.[0]?.plain_text || '(untitled)');
-  console.log('[DEBUG] Properties:', Object.keys(meta.properties).join(', '));
-} catch (e) {
-  console.warn('[WARN] retrieve failed for claimed id:', e.body?.message || e.message);
-  // Fall back: search for databases visible to this integration
-  const q = await notion.search({ query: 'Product', filter: { value: 'database', property: 'object' } });
-  const dbs = q.results.map(r => ({ id: r.id.replace(/-/g,''), title: r.title?.[0]?.plain_text || '(untitled)' }));
-  console.log('[DEBUG] Databases visible to this token:');
-  dbs.forEach(d => console.log('  •', d.title, '→', d.id));
-  process.exit(1);
-}
+  try {
+    if (claimed) {
+      const meta = await notion.databases.retrieve({ database_id: claimed });
+      console.log('[DEBUG] retrieve OK. Title:', meta?.title?.[0]?.plain_text || '(untitled)');
+      console.log('[DEBUG] Properties:', Object.keys(meta.properties).join(', '));
+    } else {
+      console.log('[WARN] No NOTION_DB_ID set; skipping retrieve test.');
+    }
+  } catch (e) {
+    console.warn('[WARN] retrieve failed for claimed id:', e.body?.message || e.message);
+  }
+
+  try {
+    const res = await notion.databases.query({
+      database_id: claimed, page_size: 3
+    });
+    console.log('[DEBUG] query ok. Sample count:', res.results.length);
+  } catch (e) {
+    console.error('[ERROR] databases.query failed\n', e.body || e.message || e);
+    process.exit(1);
+  }
+})();
