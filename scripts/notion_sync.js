@@ -1,4 +1,4 @@
-// Notion → data/products.json (auto-detect Image/Logo + multi-select Category)
+// Notion → data/products.json (robust fields + media mirroring to assets/media)
 // Usage: node scripts/notion_sync.js
 
 import fs from 'fs';
@@ -11,21 +11,16 @@ dotenv.config({ override: true });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
-// ------- ENV -------
 const NOTION_TOKEN = (process.env.NOTION_TOKEN || '').trim();
 const RAW_DB_ID    = (process.env.NOTION_DB_ID || '').trim();
 const RAW_DB_URL   = (process.env.NOTION_DB_URL || '').trim();
 const DB_NAME_HINT = (process.env.NOTION_DB_NAME || '').trim();
 
-if (!NOTION_TOKEN) {
-  console.error('❌ Missing NOTION_TOKEN');
-  process.exit(1);
-}
+if (!NOTION_TOKEN) { console.error('❌ Missing NOTION_TOKEN'); process.exit(1); }
 
 const notion = new Client({ auth: NOTION_TOKEN });
 
-// ------- Property Map (left = logical name; right = your Notion label) -------
-// If labels don’t match, we’ll also try heuristics (see below).
+// ===== config =====
 const PROPERTY_MAP = {
   Name:        'Product Name',
   SKU:         'Product SKU',
@@ -38,19 +33,19 @@ const PROPERTY_MAP = {
   PaymentURL:  'PaymentURL'
 };
 
-// ------- Helpers -------
-function extractIdFromUrl(url){ const m=(url||'').match(/[0-9a-f]{32}/i); return m?m[0]:''; }
+const OUT_JSON   = path.join(__dirname, '..', 'data', 'products.json');
+const MEDIA_DIR  = path.join(__dirname, '..', 'assets', 'media');      // written during CI
+const MEDIA_HREF = 'assets/media';                                     // href used in pages
 
+// ===== helpers =====
+function ensureDir(p){ fs.mkdirSync(p, { recursive:true }); }
+function extractIdFromUrl(url){ const m=(url||'').match(/[0-9a-f]{32}/i); return m?m[0]:''; }
 async function resolveDatabaseId(){
   if (RAW_DB_ID) return RAW_DB_ID.replace(/-/g,'').toLowerCase();
-  const fromUrl = extractIdFromUrl(RAW_DB_URL);
-  if (fromUrl) return fromUrl.toLowerCase();
+  const fromUrl = extractIdFromUrl(RAW_DB_URL); if (fromUrl) return fromUrl.toLowerCase();
   if (DB_NAME_HINT){
-    const search = await notion.search({
-      query: DB_NAME_HINT,
-      filter: { property: 'object', value: 'database' }
-    });
-    const hit = (search.results||[])
+    const s = await notion.search({ query: DB_NAME_HINT, filter:{ property:'object', value:'database' } });
+    const hit = (s.results||[])
       .map(r=>({ id:(r.id||'').replace(/-/g,''), title:r.title?.[0]?.plain_text?.trim()||'' }))
       .sort((a,b)=>(b.title===DB_NAME_HINT)-(a.title===DB_NAME_HINT))[0];
     if (hit) return hit.id;
@@ -58,55 +53,87 @@ async function resolveDatabaseId(){
   throw new Error('Could not resolve a database ID. Provide NOTION_DB_ID or NOTION_DB_URL or NOTION_DB_NAME.');
 }
 
-function richTextToPlain(rt){ return (rt||[]).map(x=>x?.plain_text||'').join('').trim(); }
+const rt2text = (rt)=> (rt||[]).map(x=>x?.plain_text||'').join('').trim();
 
-function firstFileUrl(files){
-  const f=(files||[])[0]; if(!f) return '';
-  return (f.external && f.external.url) || (f.file && f.file.url) || '';
+function firstUrlFromAny(v){
+  if (!v) return '';
+  if (typeof v === 'string') return v;
+
+  if (Array.isArray(v)) {
+    for (const it of v){ const u = firstUrlFromAny(it); if (u) return u; }
+    return '';
+  }
+  if (v.file?.url) return v.file.url;
+  if (v.external?.url) return v.external.url;
+  if (v.rich_text) return firstUrlFromAny(rt2text(v.rich_text));
+  if (v.formula?.string) return v.formula.string;
+  if (v.rollup?.array) return firstUrlFromAny(v.rollup.array);
+  if (v.url) return v.url;
+  if (v.title) return rt2text(v.title);
+  return '';
 }
 
 function rawVal(prop){
   if(!prop) return null;
   switch(prop.type){
-    case 'title': return richTextToPlain(prop.title);
-    case 'rich_text': return richTextToPlain(prop.rich_text);
-    case 'number': return prop.number;
-    case 'checkbox': return prop.checkbox;
-    case 'url': return prop.url;
-    case 'select': return prop.select ? prop.select.name : null;
+    case 'title':        return rt2text(prop.title);
+    case 'rich_text':    return rt2text(prop.rich_text);
+    case 'number':       return prop.number;
+    case 'checkbox':     return prop.checkbox;
+    case 'url':          return prop.url;
+    case 'select':       return prop.select ? prop.select.name : null;
     case 'multi_select': return (prop.multi_select||[]).map(x=>x.name).filter(Boolean);
-    case 'files': return firstFileUrl(prop.files);
-    default: return null;
+    case 'files':        return firstUrlFromAny(prop.files);
+    case 'formula':      return firstUrlFromAny(prop);
+    case 'rollup':       return firstUrlFromAny(prop);
+    default:             return null;
   }
 }
-
-// try exact label → logical → heuristics
 function V(props, logical, heuristics=[]){
   const exact = props[PROPERTY_MAP[logical]];
-  const logicalLabel = props[logical];
-  let v = rawVal(exact ?? logicalLabel);
+  const logicalProp = props[logical];
+  let v = rawVal(exact ?? logicalProp);
   if (v) return v;
-
-  // heuristic: find first property by regex candidates and type preference
-  if (heuristics.length){
-    for (const h of heuristics){
-      // h = { includes: /image|photo|pic/i, type: 'files' }
-      const entries = Object.entries(props);
-      // prefer exact type match if specified
-      const match = entries.find(([label, prop]) =>
-        h.includes.test(label) && (!h.type || prop.type === h.type)
-      );
-      if (match){ v = rawVal(match[1]); if (v) return v; }
-    }
+  for (const h of heuristics){
+    const ent = Object.entries(props).find(([label,p]) =>
+      h.includes.test(label) && (!h.type || p.type===h.type)
+    );
+    if (ent){ v = rawVal(ent[1]); if (v) return v; }
   }
   return null;
 }
+const normalizeCategory = (val)=> Array.isArray(val) ? val.join(', ') : (val||'');
 
-function normalizeCategory(val){
-  if (Array.isArray(val)) return val.join(', ');
-  return val || '';
+// ---- download + rewrite ----
+function extFromContentType(ct){
+  if (!ct) return 'bin';
+  if (ct.includes('jpeg')) return 'jpg';
+  if (ct.includes('png'))  return 'png';
+  if (ct.includes('webp')) return 'webp';
+  if (ct.includes('gif'))  return 'gif';
+  if (ct.includes('svg'))  return 'svg';
+  return ct.split('/').pop().split(';')[0] || 'bin';
 }
 
+async function mirrorOne(url, baseName){
+  try{
+    const res = await fetch(url, { redirect:'follow' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const ct = res.headers.get('content-type') || '';
+    const ext = extFromContentType(ct);
+    const file = `${baseName}.${ext}`;
+    const disk = path.join(MEDIA_DIR, file);
+    ensureDir(MEDIA_DIR);
+    const buf = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(disk, buf);
+    return `${MEDIA_HREF}/${file}`;
+  }catch(e){
+    console.warn('  [media] failed:', e.message);
+    return '';
+  }
+}
+
+// ---- query ----
 async function fetchAllPages(database_id){
   const out=[]; let cursor;
   do{
@@ -116,16 +143,13 @@ async function fetchAllPages(database_id){
   return out;
 }
 
-function ensureDir(fp){ fs.mkdirSync(path.dirname(fp), { recursive:true }); }
-
-// ------- main -------
+// ---- main ----
 (async()=>{
   try{
-    const dbid = await resolveDatabaseId();
+    const dbid   = await resolveDatabaseId();
     const dashId = dbid.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/,'$1-$2-$3-$4-$5');
     console.log('[DEBUG] Using DB:', dbid);
 
-    // Read DB meta so we can print types and aid heuristics
     let meta;
     try{
       meta = await notion.databases.retrieve({ database_id: dashId });
@@ -138,60 +162,48 @@ function ensureDir(fp){ fs.mkdirSync(path.dirname(fp), { recursive:true }); }
     }
 
     const pages = await fetchAllPages(dashId);
-    const products = pages.map(p=>{
-      const props = p.properties || {};
+    console.log(`[DEBUG] Pages: ${pages.length}`);
 
-      // Heuristic candidates
-      const imgHeur = [
-        { includes:/^image(s)?$/i, type:'files' },
-        { includes:/photo|picture|img/i, type:'files' },
-        { includes:/image|photo|picture|img/i } // any type
-      ];
-      const logoHeur = [
-        { includes:/^logo(s)?$/i, type:'files' },
-        { includes:/brand|logo/i, type:'files' },
-        { includes:/logo|brand/i }
-      ];
+    const imgHeur  = [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }];
+    const logoHeur = [{ includes:/^logo(s)?$/i },  { includes:/brand|logo/i }];
 
-      const name = V(props, 'Name') || '(unnamed)';
+    let mirrored = 0;
 
-      let image = V(props, 'Image', imgHeur) || '';
-      let logo  = V(props, 'Logo',  logoHeur) || '';
+    const products = [];
+    for (const pg of pages){
+      const props = pg.properties || {};
+      const name = V(props,'Name') || '(unnamed)';
+      const active = V(props,'Active') !== false;
+      if (!name || !active) continue;
 
-      const category = normalizeCategory( V(props, 'Category') );
+      const sku   = V(props,'SKU') || '';
+      const price = Number(V(props,'Price') || 0);
+      const category = normalizeCategory( V(props,'Category') );
+      const description = V(props,'Description') || '';
+      const payment_url = V(props,'PaymentURL') || '';
 
-      return {
-        id: p.id,
-        name,
-        sku:         V(props,'SKU') || '',
-        price:       Number(V(props,'Price')||0),
-        image,
-        logo,
-        category,
-        description: V(props,'Description') || '',
-        active:      V(props,'Active') !== false,
-        payment_url: V(props,'PaymentURL') || ''
-      };
-    }).filter(p=>p.name && p.active);
+      // raw URLs from Notion
+      const rawImage = firstUrlFromAny(props[PROPERTY_MAP.Image]) || V(props,'Image',imgHeur) || '';
+      const rawLogo  = firstUrlFromAny(props[PROPERTY_MAP.Logo])  || V(props,'Logo',logoHeur) || '';
 
-    // Helpful summary
-    const imgCount  = products.filter(p=>!!p.image).length;
-    const logoCount = products.filter(p=>!!p.logo).length;
-    console.log(`[DEBUG] Products ready: ${products.length} (images: ${imgCount}, logos: ${logoCount})`);
-    if (products[0]){
-      console.log('[DEBUG] Sample:', {
-        name: products[0].name,
-        category: products[0].category,
-        image: products[0].image ? 'yes' : 'no',
-        logo: products[0].logo ? 'yes' : 'no'
+      // mirror if present (so links never expire)
+      let image = '';
+      let logo  = '';
+      if (rawImage){ image = await mirrorOne(rawImage, `${pg.id.replace(/-/g,'')}-image`); if (image) mirrored++; }
+      if (rawLogo){  logo  = await mirrorOne(rawLogo,  `${pg.id.replace(/-/g,'')}-logo` ); if (logo)  mirrored++; }
+
+      products.push({
+        id: pg.id,
+        name, sku, price, image, logo, category, description, active, payment_url
       });
     }
 
-    // Write JSON
-    const outPath = path.join(__dirname,'..','data','products.json');
-    ensureDir(outPath);
-    fs.writeFileSync(outPath, JSON.stringify(products, null, 2));
-    console.log(`✅ Wrote ${products.length} products → ${outPath}`);
+    products.sort((a,b)=> a.name.localeCompare(b.name));
+
+    ensureDir(OUT_JSON);
+    fs.writeFileSync(OUT_JSON, JSON.stringify(products, null, 2));
+    console.log(`✅ Wrote ${products.length} products → ${OUT_JSON}`);
+    console.log(`✅ Mirrored media files: ${mirrored} → ${MEDIA_DIR}`);
   }catch(err){
     console.error('❌ Sync failed:', err.body?.message || err.message || err);
     process.exit(1);
