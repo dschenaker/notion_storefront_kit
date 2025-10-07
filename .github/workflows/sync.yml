@@ -46,3 +46,19 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Notion → products.json
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          NOTION_DB_URL: ${{ secrets.NOTION_DB_URL }}
+          NOTION_DB_NAME: ${{ secrets.NOTION_DB_NAME }}
+        run: node scripts/notion_sync.js
+
+      - name: Install Stripe SDK
+        run: npm i stripe@latest
+
+      - name: Ensure Stripe Products/Prices/PaymentLinks
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_CURRENCY: usd
+        run: node scripts/stripe_sync.js
