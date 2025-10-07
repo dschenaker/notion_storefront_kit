@@ -38,7 +38,7 @@ const MEDIA_DIR  = path.join(__dirname, '..', 'assets', 'media');      // writte
 const MEDIA_HREF = 'assets/media';                                     // href used in pages
 
 // ===== helpers =====
-function ensureDir(p){ fs.mkdirSync(p, { recursive:true }); }
+function ensureDir(fp){ fs.mkdirSync(path.dirname(fp), { recursive:true }); }
 function extractIdFromUrl(url){ const m=(url||'').match(/[0-9a-f]{32}/i); return m?m[0]:''; }
 async function resolveDatabaseId(){
   if (RAW_DB_ID) return RAW_DB_ID.replace(/-/g,'').toLowerCase();
@@ -200,7 +200,9 @@ async function fetchAllPages(database_id){
 
     products.sort((a,b)=> a.name.localeCompare(b.name));
 
-    ensureDir(OUT_JSON);
+    function ensureDir(fp) {
+  fs.mkdirSync(path.dirname(fp), { recursive: true }); // <- must use dirname
+  }
     fs.writeFileSync(OUT_JSON, JSON.stringify(products, null, 2));
     console.log(`✅ Wrote ${products.length} products → ${OUT_JSON}`);
     console.log(`✅ Mirrored media files: ${mirrored} → ${MEDIA_DIR}`);
