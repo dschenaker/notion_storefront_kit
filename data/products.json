@@ -4,7 +4,10 @@
     "name": "Carolina Blue - Gorilla",
     "sku": "CB-Gorilla",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8808c8a89e1ec10eed512-image.jpg",
+    "image": "assets/media/284a1cfa47e8808c8a89e1ec10eed512-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8808c8a89e1ec10eed512-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e8808c8a89e1ec10eed512-logo.jpg",
     "category": "Team Build, Polo",
     "description": "The Crash Outs - Gorilla",
@@ -16,7 +19,10 @@
     "name": "Carolina Blue Baclava - Baseball Jersey",
     "sku": "CB-Baclava-Baseball",
     "price": 30,
-    "image": "assets/media/284a1cfa47e88075a028ead4ac7316bf-image.jpg",
+    "image": "assets/media/284a1cfa47e88075a028ead4ac7316bf-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88075a028ead4ac7316bf-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e88075a028ead4ac7316bf-logo.jpg",
     "category": "Team Build, Baseball, Softball, Full Button",
     "description": "The Crash Outs - Baclava",
@@ -28,7 +34,10 @@
     "name": "Carolina Blue Full Button - Gorilla",
     "sku": "CB-Gorilla-Button",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8800380c1fc2441eb57bd-image.jpg",
+    "image": "assets/media/284a1cfa47e8800380c1fc2441eb57bd-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8800380c1fc2441eb57bd-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e8800380c1fc2441eb57bd-logo.jpg",
     "category": "Team Build, Baseball, Softball, Full Button",
     "description": "The Crash Outs - Gorilla",
@@ -40,7 +49,10 @@
     "name": "Carolina Blue Hoodie",
     "sku": "CB-Hoodie",
     "price": 40,
-    "image": "assets/media/284a1cfa47e880e4b8e6ddfc95476978-image.jpg",
+    "image": "assets/media/284a1cfa47e880e4b8e6ddfc95476978-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880e4b8e6ddfc95476978-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e880e4b8e6ddfc95476978-logo.jpg",
     "category": "Team Build, Hoodie",
     "description": "The Crash Outs - Hoodie",
@@ -52,7 +64,10 @@
     "name": "Carolina Blue Letterman’s Jacket",
     "sku": "CB-Letterman",
     "price": 75,
-    "image": "assets/media/284a1cfa47e880f9ac45cef7151d68b3-image.jpg",
+    "image": "assets/media/284a1cfa47e880f9ac45cef7151d68b3-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880f9ac45cef7151d68b3-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e880f9ac45cef7151d68b3-logo.jpg",
     "category": "Team Build, Letterman",
     "description": "The Crash Outs - Letterman’s Jacket",
@@ -64,7 +79,10 @@
     "name": "Carolina Blue Polo - Baclava",
     "sku": "CB-Baclava-Polo",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8806f8ee9e9ed02f6b10e-image.jpg",
+    "image": "assets/media/284a1cfa47e8806f8ee9e9ed02f6b10e-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8806f8ee9e9ed02f6b10e-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e8806f8ee9e9ed02f6b10e-logo.jpg",
     "category": "Team Build, Polo",
     "description": "The Crash Outs - Baclava",
@@ -76,7 +94,10 @@
     "name": "Carolina Blue Polo - Skull",
     "sku": "CB-Skull-Polo",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880be89c2f6dfc437598c-image.jpg",
+    "image": "assets/media/284a1cfa47e880be89c2f6dfc437598c-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880be89c2f6dfc437598c-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e880be89c2f6dfc437598c-logo.jpg",
     "category": "Team Build, Polo",
     "description": "The Crash Outs - Skull",
@@ -88,7 +109,10 @@
     "name": "Carolina Blue Skull - Baseball Jersey",
     "sku": "CB-Skull-Baseball",
     "price": 30,
-    "image": "assets/media/284a1cfa47e88066bc15e91d668c7d96-image.jpg",
+    "image": "assets/media/284a1cfa47e88066bc15e91d668c7d96-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88066bc15e91d668c7d96-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e88066bc15e91d668c7d96-logo.jpg",
     "category": "Team Build, Baseball, Softball, Full Button",
     "description": "The Crash Outs - Skull",
@@ -100,7 +124,10 @@
     "name": "Carolina Blue Zip-up Jacket",
     "sku": "CB-ZipUp",
     "price": 35,
-    "image": "assets/media/284a1cfa47e8807e999ad6728620a51c-image.jpg",
+    "image": "assets/media/284a1cfa47e8807e999ad6728620a51c-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8807e999ad6728620a51c-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e8807e999ad6728620a51c-logo.jpg",
     "category": "Team Build, ZipUp",
     "description": "The Crash Outs - Zip-up Jacket",
@@ -112,7 +139,10 @@
     "name": "Custom 1/4 Zip Traditional Bowling Jersey",
     "sku": "C-1/4 Zip",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880f4beb3e6771518ed46-image.jpg",
+    "image": "assets/media/284a1cfa47e880f4beb3e6771518ed46-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880f4beb3e6771518ed46-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, ZipUp",
     "description": "1/4 Zip, Sublimation",
@@ -124,7 +154,10 @@
     "name": "Custom Baclava Facemask",
     "sku": "C-Baclava Facemask",
     "price": 20,
-    "image": "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image.jpg",
+    "image": "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Baclava, Facemask",
     "description": "Full Sublimation",
@@ -136,7 +169,14 @@
     "name": "Custom Baseball/Softball Jersey Top",
     "sku": "C-Baseball/Softball",
     "price": 20,
-    "image": "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image.png",
+    "image": "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-0.png",
+    "images": [
+      "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-0.png",
+      "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-1.png",
+      "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-2.jpg",
+      "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-3.jpg",
+      "assets/media/284a1cfa47e880caa0d2fe1d37f8e6ef-image-4.jpg"
+    ],
     "logo": "",
     "category": "Custom, Baseball, Softball, Full Button",
     "description": "Full Button Up, Sublimation, 2 button style",
@@ -148,7 +188,10 @@
     "name": "Custom Basketball Jerseys",
     "sku": "C-Basketball Jerseys",
     "price": 40,
-    "image": "assets/media/284a1cfa47e88014aeb9ea331ef79731-image.jpg",
+    "image": "assets/media/284a1cfa47e88014aeb9ea331ef79731-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88014aeb9ea331ef79731-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Basketball, Set",
     "description": "Home and Away Full Sublimation Combo",
@@ -160,7 +203,11 @@
     "name": "Custom Blankets",
     "sku": "C-Blankets",
     "price": 25,
-    "image": "assets/media/284a1cfa47e8806da0d9fe54df8e7ca7-image.jpg",
+    "image": "assets/media/284a1cfa47e8806da0d9fe54df8e7ca7-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8806da0d9fe54df8e7ca7-image-0.jpg",
+      "assets/media/284a1cfa47e8806da0d9fe54df8e7ca7-image-1.jpg"
+    ],
     "logo": "",
     "category": "Custom, Blankets",
     "description": "Full Sublimation",
@@ -172,7 +219,11 @@
     "name": "Custom Flag Football / Soccer Shorts and Shirt",
     "sku": "C-Flag Football / Soccer Set",
     "price": 40,
-    "image": "assets/media/284a1cfa47e8808d9753e1eb7a3e0f30-image.jpg",
+    "image": "assets/media/284a1cfa47e8808d9753e1eb7a3e0f30-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8808d9753e1eb7a3e0f30-image-0.jpg",
+      "assets/media/284a1cfa47e8808d9753e1eb7a3e0f30-image-1.jpg"
+    ],
     "logo": "",
     "category": "Custom, Football, Soccer, Set",
     "description": "Full Sublimation, Combo",
@@ -184,7 +235,10 @@
     "name": "Custom Heavy Duty Hoodie",
     "sku": "C-Heavy Duty Hoodie",
     "price": 50,
-    "image": "assets/media/284a1cfa47e8805c865dd9ddf4657f2f-image.jpg",
+    "image": "assets/media/284a1cfa47e8805c865dd9ddf4657f2f-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8805c865dd9ddf4657f2f-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Hoodie, Heavy Duty",
     "description": "Full sublimation, extra padding",
@@ -196,7 +250,10 @@
     "name": "Custom Hoodie",
     "sku": "C-Hoodie",
     "price": 35,
-    "image": "assets/media/284a1cfa47e880c0a488c51562dcaf5a-image.jpg",
+    "image": "assets/media/284a1cfa47e880c0a488c51562dcaf5a-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880c0a488c51562dcaf5a-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Hoodie",
     "description": "Hoodie Sublimation",
@@ -208,7 +265,10 @@
     "name": "Custom Letterman’s Jacket",
     "sku": "C-Letterman",
     "price": 75,
-    "image": "assets/media/284a1cfa47e88078a27bf17c22917950-image.jpg",
+    "image": "assets/media/284a1cfa47e88078a27bf17c22917950-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88078a27bf17c22917950-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Letterman",
     "description": "Letterman Jacket, Leather Sleeves, Embroidered",
@@ -220,7 +280,10 @@
     "name": "Custom Long Sleeves",
     "sku": "C-Long Sleeves",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8801d8695d519a5105b9b-image.jpg",
+    "image": "assets/media/284a1cfa47e8801d8695d519a5105b9b-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8801d8695d519a5105b9b-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Long Sleeves",
     "description": "Full Sublimation",
@@ -232,7 +295,11 @@
     "name": "Custom Marketing Tent with Flags",
     "sku": "C-Tent w/ Flags",
     "price": 0,
-    "image": "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image.pdf",
+    "image": "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.pdf",
+    "images": [
+      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.pdf",
+      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-1.jpg"
+    ],
     "logo": "",
     "category": "Price Varies, Tent, Custom",
     "description": "Full Sublimation, durable fabric",
@@ -244,7 +311,16 @@
     "name": "Custom Polo",
     "sku": "C-Polo",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880c681cec8878637983c-image.jpg",
+    "image": "assets/media/284a1cfa47e880c681cec8878637983c-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-0.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-1.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-2.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-3.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-4.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-5.jpg",
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-6.jpg"
+    ],
     "logo": "",
     "category": "Custom, Polo",
     "description": "Full Sublimation",
@@ -256,7 +332,12 @@
     "name": "Custom Soccer Jerseys",
     "sku": "C-Soccer Jerseys",
     "price": 40,
-    "image": "assets/media/284a1cfa47e880c6b666e1609a243258-image.jpg",
+    "image": "assets/media/284a1cfa47e880c6b666e1609a243258-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880c6b666e1609a243258-image-0.jpg",
+      "assets/media/284a1cfa47e880c6b666e1609a243258-image-1.jpg",
+      "assets/media/284a1cfa47e880c6b666e1609a243258-image-2.jpg"
+    ],
     "logo": "",
     "category": "Custom, Soccer, Set",
     "description": "Full Sublimation, Breathable Fabric",
@@ -268,7 +349,14 @@
     "name": "Custom Softball Jersey Set",
     "sku": "C-Softball Set",
     "price": 40,
-    "image": "assets/media/284a1cfa47e880e0ae8fd350b23da117-image.jpg",
+    "image": "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-0.jpg",
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-1.jpg",
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-2.jpg",
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-3.jpg",
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-4.jpg"
+    ],
     "logo": "",
     "category": "Custom, Softball, Baseball, Set",
     "description": "Top and Pants",
@@ -280,7 +368,15 @@
     "name": "Custom T-Shirt",
     "sku": "C-T-Shirt",
     "price": 25,
-    "image": "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image.jpg",
+    "image": "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-0.jpg",
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-1.jpg",
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-2.jpg",
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-3.jpg",
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-4.jpg",
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-5.pdf"
+    ],
     "logo": "",
     "category": "Custom, T Shirt",
     "description": "Full Sublimation",
@@ -292,7 +388,11 @@
     "name": "Custom Warm Up Long Sleeves",
     "sku": "C-Warm Up Long Sleeves",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image.jpg",
+    "image": "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-0.jpg",
+      "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-1.jpg"
+    ],
     "logo": "",
     "category": "Custom, Long Sleeves",
     "description": "Breathable, long sleeves full sublimation",
@@ -304,7 +404,10 @@
     "name": "Custom Zip-Up Jacket",
     "sku": "C-ZipUp",
     "price": 35,
-    "image": "assets/media/284a1cfa47e880ab8c55f272851227f3-image.jpg",
+    "image": "assets/media/284a1cfa47e880ab8c55f272851227f3-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880ab8c55f272851227f3-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Hoodie",
     "description": "Zip Up Jacket, Sublimation",
@@ -316,7 +419,10 @@
     "name": "Del Scorcho",
     "sku": "Del Scorcho",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8806aa94ffd58fc3d2f80-image.jpg",
+    "image": "assets/media/284a1cfa47e8806aa94ffd58fc3d2f80-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8806aa94ffd58fc3d2f80-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, 1/4 Zip",
     "description": "Taco ‘Bout Strikes - Del Taco Brand",
@@ -328,7 +434,10 @@
     "name": "Diablo Jersey",
     "sku": "Diablo",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880228b05eb8450381d8d-image.jpg",
+    "image": "assets/media/284a1cfa47e880228b05eb8450381d8d-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880228b05eb8450381d8d-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, Baseball, Softball, Full Button",
     "description": "Taco ‘Bout Strikes - Diablo Sauce",
@@ -340,7 +449,10 @@
     "name": "Fire Red",
     "sku": "Fire Red",
     "price": 30,
-    "image": "assets/media/284a1cfa47e8803e8d7dce6cf00b01be-image.jpg",
+    "image": "assets/media/284a1cfa47e8803e8d7dce6cf00b01be-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8803e8d7dce6cf00b01be-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, 1/4 Zip",
     "description": "Taco ‘Bout Strikes - Fire Sauce",
@@ -352,7 +464,10 @@
     "name": "Hot Sauce Jersey",
     "sku": "Hot",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880198a81db4e8afc78fa-image.jpg",
+    "image": "assets/media/284a1cfa47e880198a81db4e8afc78fa-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880198a81db4e8afc78fa-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, 1/4 Zip",
     "description": "Taco ‘Bout Strikes - Hot Sauce",
@@ -364,7 +479,10 @@
     "name": "Mild Sauce Jersey",
     "sku": "Mild",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880198313f5e0024fe2de-image.jpg",
+    "image": "assets/media/284a1cfa47e880198313f5e0024fe2de-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880198313f5e0024fe2de-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, Baseball, Softball, Full Button",
     "description": "Taco ‘Bout Strikes - Mild Sauce",
@@ -376,7 +494,10 @@
     "name": "Pin Pushers Team Jersey",
     "sku": "Pin Pushers",
     "price": 30,
-    "image": "assets/media/284a1cfa47e88064aeecff87cb5e1a41-image.jpg",
+    "image": "assets/media/284a1cfa47e88064aeecff87cb5e1a41-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88064aeecff87cb5e1a41-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, 1/4 Zip",
     "description": "Pin Pushers Jersey",
@@ -388,7 +509,10 @@
     "name": "Red Hoodie",
     "sku": "Red-Hoodie",
     "price": 40,
-    "image": "assets/media/284a1cfa47e880108a10f16696727eee-image.jpg",
+    "image": "assets/media/284a1cfa47e880108a10f16696727eee-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880108a10f16696727eee-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e880108a10f16696727eee-logo.jpg",
     "category": "Team Build, Hoodie",
     "description": "The Crash Outs - Hoodie",
@@ -400,7 +524,10 @@
     "name": "Red Letterman’s Jacket",
     "sku": "Red-Letterman",
     "price": 75,
-    "image": "assets/media/284a1cfa47e88071a348d62d81972dea-image.jpg",
+    "image": "assets/media/284a1cfa47e88071a348d62d81972dea-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e88071a348d62d81972dea-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e88071a348d62d81972dea-logo.jpg",
     "category": "Team Build, Letterman",
     "description": "The Crash Outs - Letterman’s Jacket",
@@ -412,7 +539,10 @@
     "name": "Red Zip-up Jacket",
     "sku": "Red-ZipUp",
     "price": 35,
-    "image": "assets/media/284a1cfa47e8807ba4d7d1132e58fc4f-image.jpg",
+    "image": "assets/media/284a1cfa47e8807ba4d7d1132e58fc4f-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e8807ba4d7d1132e58fc4f-image-0.jpg"
+    ],
     "logo": "assets/media/284a1cfa47e8807ba4d7d1132e58fc4f-logo.jpg",
     "category": "Team Build, ZipUp",
     "description": "The Crash Outs - Zip-up Jacket",
@@ -424,7 +554,10 @@
     "name": "Unit Flag",
     "sku": "Unit Flag",
     "price": 25,
-    "image": "assets/media/284a1cfa47e880f28140f018692c91ea-image.jpg",
+    "image": "assets/media/284a1cfa47e880f28140f018692c91ea-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880f28140f018692c91ea-image-0.jpg"
+    ],
     "logo": "",
     "category": "Custom, Unit Merch",
     "description": "Full Sublimation",
@@ -436,7 +569,10 @@
     "name": "Verde Salsa",
     "sku": "Verde",
     "price": 30,
-    "image": "assets/media/284a1cfa47e880cabd5fd6f6853ae8af-image.jpg",
+    "image": "assets/media/284a1cfa47e880cabd5fd6f6853ae8af-image-0.jpg",
+    "images": [
+      "assets/media/284a1cfa47e880cabd5fd6f6853ae8af-image-0.jpg"
+    ],
     "logo": "",
     "category": "Team Build, T Shirt",
     "description": "Taco ‘Bout Strikes - Verde Sauce",

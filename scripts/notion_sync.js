@@ -53,24 +53,36 @@ async function resolveDatabaseId(){
   throw new Error('Could not resolve a database ID. Provide NOTION_DB_ID or NOTION_DB_URL or NOTION_DB_NAME.');
 }
 
+// ---------- media helpers (arrays) ----------
 const rt2text = (rt)=> (rt||[]).map(x=>x?.plain_text||'').join('').trim();
 
-function firstUrlFromAny(v){
-  if (!v) return '';
-  if (typeof v === 'string') return v;
+function urlsFromAny(v){
+  // return an array of URLs from many Notion shapes
+  const out = [];
+  if (!v) return out;
+
+  const push = (u)=>{ if (u && typeof u === 'string') out.push(u); };
+
+  if (typeof v === 'string') { push(v); return out; }
 
   if (Array.isArray(v)) {
-    for (const it of v){ const u = firstUrlFromAny(it); if (u) return u; }
-    return '';
+    for (const it of v) urlsFromAny(it).forEach(push);
+    return out;
   }
-  if (v.file?.url) return v.file.url;
-  if (v.external?.url) return v.external.url;
-  if (v.rich_text) return firstUrlFromAny(rt2text(v.rich_text));
-  if (v.formula?.string) return v.formula.string;
-  if (v.rollup?.array) return firstUrlFromAny(v.rollup.array);
-  if (v.url) return v.url;
-  if (v.title) return rt2text(v.title);
-  return '';
+
+  if (v.file?.url) push(v.file.url);
+  if (v.external?.url) push(v.external.url);
+
+  if (v.rich_text) urlsFromAny(rt2text(v.rich_text)).forEach(push);
+
+  if (v.formula?.string) push(v.formula.string);
+
+  if (v.rollup?.array) urlsFromAny(v.rollup.array).forEach(push);
+
+  if (v.url) push(v.url);
+  if (v.title) urlsFromAny(rt2text(v.title)).forEach(push);
+
+  return out;
 }
 
 function rawVal(prop){
@@ -83,20 +95,23 @@ function rawVal(prop){
     case 'url':          return prop.url;
     case 'select':       return prop.select ? prop.select.name : null;
     case 'multi_select': return (prop.multi_select||[]).map(x=>x.name).filter(Boolean);
-    case 'files':        return firstUrlFromAny(prop.files);
-    case 'formula':      return firstUrlFromAny(prop);
-    case 'rollup':       return firstUrlFromAny(prop);
+    case 'files':        return urlsFromAny(prop.files);   // NOTE: now returns array
+    case 'formula':      return urlsFromAny(prop);
+    case 'rollup':       return urlsFromAny(prop);
     default:             return null;
   }
 }
+
 function V(props, logical, heuristics=[]){
   const exact = props[PROPERTY_MAP[logical]];
   const logicalProp = props[logical];
+
   let v = rawVal(exact ?? logicalProp);
   if (v) return v;
+
   for (const h of heuristics){
     const ent = Object.entries(props).find(([label,p]) =>
-      h.includes.test(label) && (!h.type || p.type===h.type)
+      h.includes.test(label) && (!h.type || p.type === h.type)
     );
     if (ent){ v = rawVal(ent[1]); if (v) return v; }
   }
@@ -182,19 +197,27 @@ async function fetchAllPages(database_id){
       const description = V(props,'Description') || '';
       const payment_url = V(props,'PaymentURL') || '';
 
-      // raw URLs from Notion
-      const rawImage = firstUrlFromAny(props[PROPERTY_MAP.Image]) || V(props,'Image',imgHeur) || '';
-      const rawLogo  = firstUrlFromAny(props[PROPERTY_MAP.Logo])  || V(props,'Logo',logoHeur) || '';
+      // raw arrays from Notion
+      const rawImages = (V(props, 'Image', [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }]) || []);
+      const rawLogos  = (V(props, 'Logo',  [{ includes:/^logo(s)?$/i },  { includes:/brand|logo/i }]) || []);
 
-      // mirror if present (so links never expire)
-      let image = '';
-      let logo  = '';
-      if (rawImage){ image = await mirrorOne(rawImage, `${pg.id.replace(/-/g,'')}-image`); if (image) mirrored++; }
-      if (rawLogo){  logo  = await mirrorOne(rawLogo,  `${pg.id.replace(/-/g,'')}-logo` ); if (logo)  mirrored++; }
+      // mirror all images (first one becomes the primary)
+      const mirroredImages = [];
+      for (let i = 0; i < rawImages.length; i++) {
+        const url = rawImages[i];
+        const href = url ? await mirrorOne(url, `${pg.id.replace(/-/g,'')}-image-${i}`) : '';
+        if (href) mirroredImages.push(href);
+      }
+      let logoHref = '';
+      if (rawLogos[0]) logoHref = await mirrorOne(rawLogos[0], `${pg.id.replace(/-/g,'')}-logo`);
 
       products.push({
         id: pg.id,
-        name, sku, price, image, logo, category, description, active, payment_url
+        name, sku, price,
+        image: mirroredImages[0] || '',   // primary
+        images: mirroredImages,           // gallery
+        logo: logoHref || '',
+        category, description, active, payment_url
       });
     }
 
