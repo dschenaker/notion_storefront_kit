@@ -155,29 +155,54 @@
   }
 
   function renderProduct({id}){
-    const p = products.find(x=>String(x.id)===String(id));
-    if (!p){ els.root.innerHTML = `<p class="hint" style="padding:16px">Product not found.</p>`; return; }
-    const hero = p.image ? `<img alt="${esc(p.name)}" src="${esc(p.image)}" loading="lazy" onerror="this.replaceWith(document.createTextNode('No image'))">` : '<div class="badge">No image</div>';
-    const logo = logoHTML(p);
-    els.root.innerHTML = `
-      <div class="product-page">
-        <div class="imgwrap">${hero}${logo}</div>
-        <div class="body" style="padding:16px">
-          <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
-          <h2 style="margin:8px 0 6px">${esc(p.name)}</h2>
-          <div class="price" style="font-size:1.25rem">${fmt.format(p.price||0)}</div>
-          <div class="sku">${esc(p.sku||'')}</div>
-          <p class="desc">${esc(p.description||'')}</p>
-          <div class="actions">
-            <button data-add="${p.id}">Add to cart</button>
-            <button class="primary" data-buy="${p.id}">Buy now</button>
-          </div>
-          <div style="margin-top:10px"><a href="#/">← Back to products</a></div>
+  const p = products.find(x=>String(x.id)===String(id));
+  if (!p){ els.root.innerHTML = `<p class="hint" style="padding:16px">Product not found.</p>`; return; }
+
+  const imgs = (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []))
+               .filter(Boolean);
+
+  els.root.innerHTML = `
+    <div class="product-page">
+      <div class="gallery">
+        <div class="gallery-main">
+          ${imgs.length ? `<img id="gMain" src="${esc(imgs[0])}" alt="${esc(p.name)}" loading="eager">`
+                        : `<div class="badge">No image</div>`}
+          ${p.logo ? `<div class="logo-badge"><img alt="" src="${esc(p.logo)}" loading="lazy"
+             onerror="this.replaceWith(createLogoFallback('${esc(initials(p.name))}'))"></div>`
+                   : `<div class="logo-badge"><span class="logo-fallback">${esc(initials(p.name))}</span></div>`}
+          <button class="g-nav prev" id="gPrev" aria-label="Previous image">‹</button>
+          <button class="g-nav next" id="gNext" aria-label="Next image">›</button>
         </div>
+        ${imgs.length > 1 ? `
+        <div class="gallery-thumbs" id="gThumbs">
+          ${imgs.map((u,i)=>`
+            <button class="thumb ${i===0?'active':''}" data-i="${i}" aria-label="Image ${i+1}">
+              <img src="${esc(u)}" alt="">
+            </button>`).join('')}
+        </div>` : ``}
       </div>
-    `;
-    wireCardButtons();
-  }
+
+      <div class="body" style="padding:16px">
+        <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category || 'Uncategorized')}</a>
+        <h2 style="margin:8px 0 6px">${esc(p.name)}</h2>
+        <div class="price" style="font-size:1.25rem">${fmt.format(p.price||0)}</div>
+        <div class="sku">${esc(p.sku||'')}</div>
+        <p class="desc">${esc(p.description||'')}</p>
+        <div class="actions">
+          <button data-add="${p.id}">Add to cart</button>
+          ${p.payment_url ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
+                          : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
+        </div>
+        <div style="margin-top:10px"><a href="#/">← Back to products</a></div>
+      </div>
+    </div>
+  `;
+
+  // wire gallery
+  initGallery(imgs);
+  // wire cart/buy
+  wireCardButtons();
+}
 
   function renderBrands(){
     const groups = groupBy(products.filter(p=>p.logo), x=>x.category);
@@ -265,17 +290,78 @@
       location.href = mailto;
     };
   }
+function initGallery(imgs){
+  const main = document.getElementById('gMain');
+  const thumbs = document.getElementById('gThumbs');
+  if (!main || !imgs || !imgs.length) return;
 
+  let idx = 0;
+
+  const setIdx = (i)=>{
+    idx = (i + imgs.length) % imgs.length;
+    main.src = imgs[idx];
+    // update active thumb
+    if (thumbs){
+      thumbs.querySelectorAll('.thumb').forEach((b,bi)=> b.classList.toggle('active', bi===idx));
+      // auto-scroll thumbs to keep active in view
+      const active = thumbs.querySelector('.thumb.active');
+      if (active) active.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+    }
+  };
+
+  // buttons
+  const prev = document.getElementById('gPrev');
+  const next = document.getElementById('gNext');
+  if (prev) prev.onclick = ()=> setIdx(idx-1);
+  if (next) next.onclick = ()=> setIdx(idx+1);
+
+  // thumbs
+  if (thumbs){
+    thumbs.querySelectorAll('.thumb').forEach(b=>{
+      b.onclick = ()=> setIdx(parseInt(b.dataset.i,10)||0);
+    });
+  }
+
+  // keyboard
+  const onKey = (e)=> {
+    if (e.key === 'ArrowLeft') setIdx(idx-1);
+    if (e.key === 'ArrowRight') setIdx(idx+1);
+  };
+  document.addEventListener('keydown', onKey, { passive:true });
+  // simple swipe
+  attachSwipe(document.querySelector('.gallery-main'), ()=>setIdx(idx-1), ()=>setIdx(idx+1));
+}
+
+function attachSwipe(el, onLeft, onRight){
+  if (!el) return;
+  let startX=0, startY=0, active=false;
+  el.addEventListener('touchstart', (e)=>{
+    const t=e.touches[0]; startX=t.clientX; startY=t.clientY; active=true;
+  }, {passive:true});
+  el.addEventListener('touchmove', (e)=>{
+    if(!active) return;
+    const t=e.touches[0]; const dx=t.clientX-startX; const dy=t.clientY-startY;
+    if (Math.abs(dx)>30 && Math.abs(dx)>Math.abs(dy)){ e.preventDefault(); if(dx>0) onLeft(); else onRight(); active=false; }
+  }, {passive:false});
+  el.addEventListener('touchend', ()=>{ active=false; }, {passive:true});
+}
   // ---------- UI helpers ----------
   function cardHTML(p){
-    const img  = p.image ? `<img alt="${esc(p.name)}" src="${esc(p.image)}" loading="lazy" onerror="this.replaceWith(document.createTextNode('No image'))">` : `<div class="badge">No image</div>`;
-    const logo = logoHTML(p);
-    const price = p.price!=null ? `<div class="price">${fmt.format(p.price)}</div>` : '<span class="badge">Ask</span>';
-    const sku = p.sku ? `<div class="sku">${esc(p.sku)}</div>` : '';
-    return `<article class="card">
+  const imgs = (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []));
+  const img  = imgs[0];
+  const logo = logoHTML(p);
+  const price = p.price!=null ? `<div class="price">${fmt.format(p.price)}</div>` : '<span class="badge">Ask</span>';
+  const sku = p.sku ? `<div class="sku">${esc(p.sku)}</div>` : '';
+  const thumbs = imgs.slice(1,4).map(u=>`<span class="mini" style="background-image:url('${esc(u)}')"></span>`).join('');
+  return `<article class="card">
       <a href="#/product/${encodeURIComponent(p.id)}">
-        <div class="imgwrap">${img}${logo}</div>
+        <div class="imgwrap">
+          ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy" onerror="this.replaceWith(document.createTextNode('No image'))">`
+                 : `<div class="badge">No image</div>`}
+          ${logo}
+        </div>
       </a>
+      ${imgs.length>1 ? `<div class="mini-strip">${thumbs}</div>` : ``}
       <div class="body">
         <div><a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a></div>
         <h3><a href="#/product/${encodeURIComponent(p.id)}">${esc(p.name)}</a></h3>
@@ -287,7 +373,7 @@
         <button class="primary" data-buy="${p.id}">Buy</button>
       </div>
     </article>`;
-  }
+}
   function logoHTML(p){
     if (p.logo) {
       return `<div class="logo-badge">

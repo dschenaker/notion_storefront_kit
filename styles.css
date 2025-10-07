@@ -99,3 +99,22 @@ textarea{min-height:120px}
 .actions{display:flex;gap:8px;margin-top:12px}
 .btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer}
 .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+/* Product gallery */
+.product-page{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;padding:16px}
+@media (max-width:900px){ .product-page{grid-template-columns:1fr} }
+
+.gallery{display:grid;gap:10px}
+.gallery-main{position:relative;background:color-mix(in oklab, var(--panel) 90%, black 6%);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.gallery-main img{width:100%;height:min(520px,60vh);object-fit:cover;display:block}
+.g-nav{position:absolute;top:50%;transform:translateY(-50%);border:none;background:color-mix(in oklab, var(--panel) 70%, black 10%);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;opacity:.8}
+.g-nav:hover{opacity:1}
+#gPrev{left:10px} #gNext{right:10px}
+
+.gallery-thumbs{display:flex;gap:8px;overflow:auto;padding:4px}
+.gallery-thumbs .thumb{border:1px solid var(--border);background:var(--panel);padding:0;border-radius:10px;cursor:pointer;outline:0}
+.gallery-thumbs .thumb img{width:70px;height:70px;object-fit:cover;display:block;border-radius:10px}
+.gallery-thumbs .thumb.active{outline:2px solid var(--brand);}
+
+.btn-link{display:inline-block;text-align:center;padding:10px 12px;border-radius:10px;background:var(--brand);color:#fff}
+.mini-strip{display:flex;gap:6px;padding:8px 12px}
+.mini-strip .mini{width:22px;height:22px;border-radius:6px;background-size:cover;background-position:center;border:1px solid var(--border);opacity:.9}
