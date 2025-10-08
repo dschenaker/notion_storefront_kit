@@ -240,23 +240,29 @@ async function mirrorOne(url, baseName) {
       const description = V(props, 'Description') || '';
       const payment_url = V(props, 'PaymentURL') || prev.payment_url || '';
 
-      // --- Collect primary + deterministic variant columns ---
+      // --- Collect primary + auto-detected variant columns ---
+
+      // Start with the primary mapped Image field
       let rawImages = [];
       const primary = V(props, 'Image');
-      if (primary) {
-        const arr = Array.isArray(primary) ? primary : [primary];
-        rawImages.push(...arr);
-      }
-      for (const col of VARIANT_COLUMNS) {
-        const v = rawVal(props[col]);
-        if (v) {
+      if (primary) rawImages.push(...(Array.isArray(primary) ? primary : [primary]));
+
+      // Auto-detect any column that looks like a variant/gallery/image #
+      // Examples matched: "Variant 1", "Variant1", "Variant 01", "Image 2", "Images 3", "Gallery 4"
+      const VARIANT_RE = /^(variant|image|images|gallery)\s*0*\d+$/i;
+
+      const variantCols = Object.keys(props).filter(k => VARIANT_RE.test(k));
+      if (variantCols.length) {
+        for (const col of variantCols) {
+          const v = rawVal(props[col]);
+          if (!v) continue;
           const arr = Array.isArray(v) ? v : [v];
           rawImages.push(...arr);
         }
       }
-      // dedupe, keep first 12
-      rawImages = Array.from(new Set(rawImages)).slice(0, 12);
 
+      // Deduplicate + cap
+      rawImages = Array.from(new Set(rawImages)).slice(0, 20);
       // --- Logo (first only) ---
       let rawLogo = '';
       const logoVal = V(props, 'Logo');
@@ -299,7 +305,7 @@ async function mirrorOne(url, baseName) {
       });
 
       // per-product debug
-      console.log(`  • ${name}: images=${images.length}${logo ? ', logo=1' : ''}`);
+      console.log(`  • ${name}: images=${images.length}${logo ? ', logo=1' : ''}  [from: Image + ${variantCols.join(', ') || '—'}]`);
     }
 
     products.sort((a, b) => a.name.localeCompare(b.name));
