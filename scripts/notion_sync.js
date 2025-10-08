@@ -1,18 +1,16 @@
 // scripts/notion_sync.js
-// Notion → data/products.json (robust + multi-image + mirroring + safe fallbacks)
-//
-// Usage: node scripts/notion_sync.js
-//
-// Env (local .env or GitHub Secrets):
-//   NOTION_TOKEN=ntn_xxx
-//   # choose one:
-//   NOTION_DB_ID=284a1cfa47e880b289fff500602fe085
-//   NOTION_DB_URL=https://www.notion.so/.../284a1cfa47e880b289fff500602fe085?v=...
-//   NOTION_DB_NAME=Product Catalog Master
+// Notion → data/products.json with deterministic multi-image intake
+// Columns used (case-sensitive):
+//   Product Name (title), Product SKU (text), Price (number)
+//   Image (files or url), Logo (files or url)
+//   Variant 1..Variant 5 (each: files or url)  ← add more in VARIANT_COLUMNS if needed
+//   Category (select or multi-select), Description (rich_text), Active (checkbox),
+//   PaymentURL (url)  ← optional; preserved if present
 //
 // Output:
 //   data/products.json
-//   assets/media/* (downloaded images/logos, permanent links for Pages)
+//   assets/media/* (mirrored images for permanent URLs)
+// Usage: node scripts/notion_sync.js
 
 import fs from 'fs';
 import path from 'path';
@@ -39,23 +37,31 @@ if (!NOTION_TOKEN) {
 const notion = new Client({ auth: NOTION_TOKEN });
 
 // ====== CONFIG: map logical → your Notion column labels ======
-// Adjust right-hand labels only if your column names differ.
 const PROPERTY_MAP = {
   Name:        'Product Name',
   SKU:         'Product SKU',
   Price:       'Price',
-  Image:       'Image',        // files / url / rich_text / formula / rollup
-  Logo:        'Logo',         // files / url / rich_text / formula / rollup
-  Category:    'Category',     // select or multi-select
+  Image:       'Image',
+  Logo:        'Logo',
+  Category:    'Category',
   Description: 'Description',
   Active:      'Active',
   PaymentURL:  'PaymentURL'
 };
 
+// Deterministic extra image columns. Add/remove as you like.
+const VARIANT_COLUMNS = [
+  'Variant 1',
+  'Variant 2',
+  'Variant 3',
+  'Variant 4',
+  'Variant 5'
+];
+
 // ====== OUTPUT PATHS ======
 const OUT_JSON   = path.join(__dirname, '..', 'data', 'products.json');
-const MEDIA_DIR  = path.join(__dirname, '..', 'assets', 'media');  // directory to write images
-const MEDIA_HREF = 'assets/media';                                  // href used in JSON
+const MEDIA_DIR  = path.join(__dirname, '..', 'assets', 'media');
+const MEDIA_HREF = 'assets/media';
 
 // ====== FS helpers ======
 function ensureFileParent(fp) { fs.mkdirSync(path.dirname(fp), { recursive: true }); }
@@ -99,36 +105,10 @@ async function resolveDatabaseId() {
 
   throw new Error('Could not resolve a database. Provide NOTION_DB_ID or NOTION_DB_URL or NOTION_DB_NAME.');
 }
-// returns true if label looks like an image-y field
-function isImageyLabel(label) {
-  return /^(image|images|gallery|photos?|pictures?|pics?)$/i.test(label);
-}
 
-// try to extract *multiple* image URLs from any property payload
-function imageUrlsFromProp(prop) {
-  // reuse your existing urlsFromAny() that returns an array of URLs
-  const urls = urlsFromAny(prop) || [];
-  // keep only things that look like images (basic filter)
-  return urls.filter(u => /\.(png|jpe?g|webp|gif|svg)(\?|#|$)/i.test(u) || /image\//i.test(u));
-}
-
-// fetch page cover (Notion’s page “cover” field)
-async function getPageCoverUrl(notion, pageId) {
-  try {
-    const dash = pageId; // page ids from query are already dashed
-    const page = await notion.pages.retrieve({ page_id: dash });
-    const cover = page.cover;
-    if (!cover) return '';
-    if (cover.external?.url) return cover.external.url;
-    if (cover.file?.url)     return cover.file.url;
-    return '';
-  } catch {
-    return '';
-  }
-}
 const rt2text = (rt) => (rt || []).map(x => x?.plain_text || '').join('').trim();
 
-// Extract **array** of URLs from many Notion shapes
+// Return **array** of URLs from common Notion shapes
 function urlsFromAny(v) {
   const out = [];
   const push = (u) => { if (u && typeof u === 'string') out.push(u); };
@@ -145,7 +125,6 @@ function urlsFromAny(v) {
   if (v.external?.url) push(v.external.url);
 
   if (v.rich_text) urlsFromAny(rt2text(v.rich_text)).forEach(push);
-
   if (v.formula?.string) push(v.formula.string);
 
   if (v.rollup?.array) urlsFromAny(v.rollup.array).forEach(push);
@@ -173,21 +152,10 @@ function rawVal(prop) {
   }
 }
 
-// Exact label → logical → heuristics (regex/type)
-function V(props, logical, heuristics = []) {
+function V(props, logical) {
   const exact = props[PROPERTY_MAP[logical]];
   const logicalProp = props[logical];
-
-  let v = rawVal(exact ?? logicalProp);
-  if (v) return v;
-
-  for (const h of heuristics) {
-    const ent = Object.entries(props).find(([label, p]) =>
-      h.includes.test(label) && (!h.type || p.type === h.type)
-    );
-    if (ent) { v = rawVal(ent[1]); if (v) return v; }
-  }
-  return null;
+  return rawVal(exact ?? logicalProp);
 }
 
 const normalizeCategory = (val) => Array.isArray(val) ? val.join(', ') : (val || '');
@@ -214,7 +182,6 @@ function extFromContentType(ct) {
   return ct.split('/').pop().split(';')[0] || 'bin';
 }
 
-// Download bytes to assets/media; return local href or ''
 async function mirrorOne(url, baseName) {
   try {
     ensureDir(MEDIA_DIR);
@@ -255,9 +222,6 @@ async function mirrorOne(url, baseName) {
     const pages = await fetchAllPages(dashId);
     console.log(`[DEBUG] Pages: ${pages.length}`);
 
-    const imgHeur  = [{ includes: /^image(s)?$/i }, { includes: /photo|picture|img/i }];
-    const logoHeur = [{ includes: /^logo(s)?$/i },  { includes: /brand|logo/i }];
-
     let mirrored = 0, reused = 0;
     const products = [];
 
@@ -276,32 +240,32 @@ async function mirrorOne(url, baseName) {
       const description = V(props, 'Description') || '';
       const payment_url = V(props, 'PaymentURL') || prev.payment_url || '';
 
-            // 1) Start with the primary Image column (may already be an array)
-      let rawImages = V(props, 'Image', [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }]) || [];
-      if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
-
-      // 2) Scan ALL properties for additional image-like fields (files/url/etc)
-      for (const [label, prop] of Object.entries(props)) {
-        // skip if it's literally our mapped Image or Logo field
-        const mappedImage = PROPERTY_MAP.Image || 'Image';
-        const mappedLogo  = PROPERTY_MAP.Logo  || 'Logo';
-        if (label === mappedImage || label === mappedLogo) continue;
-
-        if (prop?.type === 'files' && isImageyLabel(label)) {
-          rawImages.push(...imageUrlsFromProp(prop));
-        } else if (isImageyLabel(label)) {
-          rawImages.push(...imageUrlsFromProp(prop));
+      // --- Collect primary + deterministic variant columns ---
+      let rawImages = [];
+      const primary = V(props, 'Image');
+      if (primary) {
+        const arr = Array.isArray(primary) ? primary : [primary];
+        rawImages.push(...arr);
+      }
+      for (const col of VARIANT_COLUMNS) {
+        const v = rawVal(props[col]);
+        if (v) {
+          const arr = Array.isArray(v) ? v : [v];
+          rawImages.push(...arr);
         }
       }
-
-      // 3) Also try the page cover
-      const coverUrl = await getPageCoverUrl(notion, pg.id);
-      if (coverUrl) rawImages.push(coverUrl);
-
-      // Deduplicate, cap to something reasonable
+      // dedupe, keep first 12
       rawImages = Array.from(new Set(rawImages)).slice(0, 12);
 
-      // Mirror all images (first becomes primary)
+      // --- Logo (first only) ---
+      let rawLogo = '';
+      const logoVal = V(props, 'Logo');
+      if (logoVal) {
+        const arr = Array.isArray(logoVal) ? logoVal : [logoVal];
+        rawLogo = arr[0] || '';
+      }
+
+      // Mirror images
       const images = [];
       for (let i = 0; i < rawImages.length; i++) {
         const url  = rawImages[i];
@@ -309,10 +273,10 @@ async function mirrorOne(url, baseName) {
         if (href) { images.push(href); mirrored++; }
       }
 
-      // Mirror first logo only
+      // Mirror logo
       let logo = '';
-      if (rawLogos[0]) {
-        const lh = await mirrorOne(rawLogos[0], `${id.replace(/-/g, '')}-logo`);
+      if (rawLogo) {
+        const lh = await mirrorOne(rawLogo, `${id.replace(/-/g, '')}-logo`);
         if (lh) { logo = lh; mirrored++; }
       }
 
@@ -325,18 +289,19 @@ async function mirrorOne(url, baseName) {
         name,
         sku,
         price,
-        image: images[0] || prev.image || '',  // keep legacy primary
-        images,                                 // full gallery
+        image: images[0] || prev.image || '',
+        images,
         logo,
         category,
         description,
         active,
         payment_url
       });
+
+      // per-product debug
+      console.log(`  • ${name}: images=${images.length}${logo ? ', logo=1' : ''}`);
     }
-    console.log(`  • ${name}: images=${images.length}${logo ? ', logo=1' : ''}`);
-    
-    // stable sort
+
     products.sort((a, b) => a.name.localeCompare(b.name));
 
     ensureFileParent(OUT_JSON);

@@ -156,7 +156,8 @@
     "price": 20,
     "image": "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-0.jpg",
     "images": [
-      "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-0.jpg"
+      "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-0.jpg",
+      "assets/media/284a1cfa47e8806ca93fcc3d5a063760-image-1.jpg"
     ],
     "logo": "",
     "category": "Custom, Baclava, Facemask",
@@ -295,10 +296,10 @@
     "name": "Custom Marketing Tent with Flags",
     "sku": "C-Tent w/ Flags",
     "price": 0,
-    "image": "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.pdf",
+    "image": "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.jpg",
     "images": [
-      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.pdf",
-      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-1.jpg"
+      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-0.jpg",
+      "assets/media/284a1cfa47e880fb988dd83f0ac2cbfb-image-1.pdf"
     ],
     "logo": "",
     "category": "Price Varies, Tent, Custom",
@@ -318,8 +319,7 @@
       "assets/media/284a1cfa47e880c681cec8878637983c-image-2.jpg",
       "assets/media/284a1cfa47e880c681cec8878637983c-image-3.jpg",
       "assets/media/284a1cfa47e880c681cec8878637983c-image-4.jpg",
-      "assets/media/284a1cfa47e880c681cec8878637983c-image-5.jpg",
-      "assets/media/284a1cfa47e880c681cec8878637983c-image-6.jpg"
+      "assets/media/284a1cfa47e880c681cec8878637983c-image-5.jpg"
     ],
     "logo": "",
     "category": "Custom, Polo",
@@ -355,7 +355,8 @@
       "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-1.jpg",
       "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-2.jpg",
       "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-3.jpg",
-      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-4.jpg"
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-4.jpg",
+      "assets/media/284a1cfa47e880e0ae8fd350b23da117-image-5.jpg"
     ],
     "logo": "",
     "category": "Custom, Softball, Baseball, Set",
@@ -375,7 +376,7 @@
       "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-2.jpg",
       "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-3.jpg",
       "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-4.jpg",
-      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-5.pdf"
+      "assets/media/284a1cfa47e8803c84cee507ed4fab5c-image-5.jpg"
     ],
     "logo": "",
     "category": "Custom, T Shirt",
@@ -391,7 +392,8 @@
     "image": "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-0.jpg",
     "images": [
       "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-0.jpg",
-      "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-1.jpg"
+      "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-1.jpg",
+      "assets/media/284a1cfa47e880e2ba5bfbdfabec5615-image-2.jpg"
     ],
     "logo": "",
     "category": "Custom, Long Sleeves",
