@@ -6,17 +6,22 @@
   <title>Storefront</title>
   <link rel="stylesheet" href="./styles.css">
   <style>
-    /* minimal guard styles for safety */
     :root{
       --panel:#0f1216; --border:#1d2330; --brand:#4da3ff;
       --fg:#e7eef7; --muted:#9fb0c2; --chip:#16202b;
     }
     body{ margin:0; background:#0b0e12; color:var(--fg); font:15px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif }
+
+    /* Header: 3-column grid so links are centered */
     header{ position:sticky; top:0; z-index:10; backdrop-filter:saturate(1.2) blur(8px); background:#0b0e12cc; border-bottom:1px solid var(--border) }
-    .nav{ display:flex; gap:18px; align-items:center; padding:12px 16px }
-    .nav a{ color:var(--fg); text-decoration:none; opacity:.9 }
-    .nav a:hover{ opacity:1 }
-    .nav .spacer{ flex:1 }
+    .nav{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:12px 16px; gap:12px }
+    .nav-left{ font-weight:700 }
+    .nav-center{ display:flex; gap:18px; justify-content:center }
+    .nav-center a{ color:var(--fg); text-decoration:none; opacity:.9 }
+    .nav-center a:hover{ opacity:1 }
+    .nav-right{ display:flex; gap:10px; justify-content:flex-end }
+    .btn{ background:#16202b; color:var(--fg); border:1px solid var(--border); padding:8px 12px; border-radius:10px; text-decoration:none; cursor:pointer }
+    .btn.primary{ background:var(--brand); color:#001019; border:none }
 
     .layout{ display:grid; grid-template-columns:280px 1fr; gap:20px; padding:16px }
     @media (max-width:900px){ .layout{ grid-template-columns:1fr } }
@@ -28,6 +33,9 @@
     .chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; background:var(--chip); border:1px solid var(--border); border-radius:999px; color:var(--fg); text-decoration:none; font-size:.9rem }
     .chip.active{ outline:2px solid var(--brand) }
     .muted{ color:var(--muted) }
+
+    /* Center the main page headers */
+    .main h2{ text-align:center; margin:8px 0 12px }
 
     .grid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px }
     @media (max-width:1100px){ .grid{ grid-template-columns:repeat(2, minmax(0,1fr)) } }
@@ -69,13 +77,21 @@
 <body>
   <header>
     <nav class="nav">
-      <strong>Storefront</strong>
-      <a href="#/">Shop</a>
-      <a href="#/">Categories</a>
-      <a href="#/about">About</a>
-      <a href="#/contact">Contact / Quote</a>
-      <span class="spacer"></span>
-      <!-- Theme / Sync buttons could live here later -->
+      <div class="nav-left"><strong>Storefront</strong></div>
+
+      <div class="nav-center">
+        <a href="#/">Shop</a>
+        <a href="#/">Categories</a>
+        <a href="#/about">About</a>
+        <a href="#/contact">Contact / Quote</a>
+      </div>
+
+      <div class="nav-right">
+        <button id="themeBtn" class="btn">Theme</button>
+        <!-- Opens your workflow page in a new tab -->
+        <a class="btn" href="https://github.com/dschenaker/notion_storefront_kit/actions/workflows/sync.yml" target="_blank" rel="noopener">Sync</a>
+        <a id="cartBtn" class="btn" href="#/cart">Cart <span id="cartCount">0</span></a>
+      </div>
     </nav>
   </header>
 
