@@ -51,8 +51,7 @@ jobs:
           NOTION_DB_URL: ${{ secrets.NOTION_DB_URL }}
           NOTION_DB_NAME: ${{ secrets.NOTION_DB_NAME }}
           NODE_OPTIONS: "--unhandled-rejections=strict --trace-uncaught"
-        run: |
-          node scripts/notion_sync.js
+        run: node scripts/notion_sync.js
 
       - name: Install Stripe SDK
         run: npm i stripe@latest
@@ -62,15 +61,14 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_CURRENCY: usd
           NODE_OPTIONS: "--unhandled-rejections=strict --trace-uncaught"
-        run: |
-          node scripts/stripe_sync.js
+        run: node scripts/stripe_sync.js
 
       - name: Stamp build time
         run: |
           mkdir -p data
           date -u +'%Y-%m-%d %H:%M:%S UTC' > data/last_sync.txt
 
-      - name: Upload artifact
+      - name: Upload artifact (site)
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./
