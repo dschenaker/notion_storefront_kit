@@ -1,59 +1,72 @@
-// app.js — minimal, robust storefront SPA
-// - Loads ./data/products.json (cache-busted)
-// - Grid with cards
-// - Product page with variant picker (uses p.images[])
-// - Categories in nav + sidebar
-// - Defensive rendering so errors don't blank the page
+// app.js — clean build
+// - Loads ./data/products.json (cache-busted, no-store)
+// - Grid of cards + product page with variant picker (uses p.images[])
+// - Categories filter + search + sort
+// - Cart (localStorage) with header count
+// - Theme toggle hook
 
 (() => {
   'use strict';
 
   // ---------- Helpers ----------
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[m]));
   const initials = s => (s||'').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() || 'C';
-  const fmt = new Intl.NumberFormat(undefined, { style:'currency', currency:'USD' });
+  const slug = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  const fmt  = new Intl.NumberFormat(undefined, { style:'currency', currency:'USD' });
 
   const els = {
-    root: document.getElementById('app') || document.body
+    root: document.getElementById('app') || document.body,
   };
 
-  // Always fetch a fresh copy (avoid stale cache)
+  // Always fetch fresh to avoid stale cache on Pages
   const DATA_URL = './data/products.json?ts=' + Date.now();
 
+  // ---------- State ----------
   let products = [];
   let view = { q:'', cat:'', sort:'featured' };
 
+  // ---------- Data load ----------
   async function loadProducts(){
     const res = await fetch(DATA_URL, { cache:'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (!Array.isArray(json)) throw new Error('Malformed products.json (expected array)');
+
     products = json.map(p => ({
       ...p,
       category: p.category || 'Uncategorized',
       categorySlug: slug(p.category || 'Uncategorized'),
-      images: Array.isArray(p.images) ? p.images.filter(Boolean) : (p.image ? [p.image] : [])
+      images: Array.isArray(p.images) && p.images.length
+        ? p.images.filter(Boolean)
+        : (p.image ? [p.image] : [])
     }));
     console.log('Loaded products:', products.length);
   }
 
-  const slug = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  // ---------- Cart (localStorage) ----------
+  const CART_KEY = 'storefront_cart';
+  function readCart(){ try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); } catch { return []; } }
+  function writeCart(items){ localStorage.setItem(CART_KEY, JSON.stringify(items||[])); updateCartUI(); }
+  function addToCart(id){ const items = readCart(); items.push(String(id)); writeCart(items); }
+  function cartCount(){ return readCart().length; }
+  function updateCartUI(){ const el = document.getElementById('cartCount'); if (el) el.textContent = String(cartCount()); }
 
-  // ---------- Card & Grid ----------
+  // ---------- UI building blocks ----------
   function logoHTML(p){
     if (p.logo) return `<div class="logo-badge"><img alt="" src="${esc(p.logo)}" loading="lazy" onerror="this.style.display='none'"></div>`;
     return `<div class="logo-badge"><span class="logo-fallback">${esc(initials(p.name))}</span></div>`;
   }
 
   function cardHTML(p){
-    const imgs = p.images.length ? p.images : [];
+    const imgs = p.images;
     const img  = imgs[0];
     const multi = imgs.length > 1 ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>` : '';
     return `<article class="card">
       <a href="#/product/${encodeURIComponent(p.id)}" aria-label="${esc(p.name)}">
         <div class="imgwrap">
-          ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy">`
-                : `<div class="badge">No image</div>`}
+          ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy">` : `<div class="badge">No image</div>`}
           ${multi}
           ${logoHTML(p)}
         </div>
@@ -62,7 +75,7 @@
         <div><a class="chip" href="#/category/${esc(p.categorySlug)}">${esc(p.category)}</a></div>
         <h3><a href="#/product/${encodeURIComponent(p.id)}">${esc(p.name)}</a></h3>
         <div class="price">${fmt.format(p.price||0)}</div>
-        ${p.sku ? `<div class="sku">${esc(p.sku)}</div>`:''}
+        ${p.sku ? `<div class="sku">${esc(p.sku)}</div>` : ``}
         <div class="desc">${esc(p.description||'')}</div>
       </div>
       <div class="actions">
@@ -86,14 +99,14 @@
     }
   }
 
-  // ---------- Sidebar / Filters ----------
+  // ---------- Filters / derived ----------
   function uniqueCategories(){
-    const set = new Map();
+    const map = new Map();
     for (const p of products){
-      const key = p.category || 'Uncategorized';
-      set.set(key, (set.get(key)||0) + 1);
+      const k = p.category || 'Uncategorized';
+      map.set(k, (map.get(k)||0) + 1);
     }
-    return [...set.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    return [...map.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   }
 
   function applyFilters(){
@@ -111,9 +124,7 @@
     }
 
     // category
-    if (view.cat){
-      list = list.filter(p => p.categorySlug === view.cat);
-    }
+    if (view.cat){ list = list.filter(p => p.categorySlug === view.cat); }
 
     // sort
     switch (view.sort){
@@ -128,6 +139,7 @@
   // ---------- Views ----------
   function renderHome(){
     const cats = uniqueCategories();
+
     els.root.innerHTML = `
       <div class="layout">
         <aside class="side">
@@ -172,11 +184,12 @@
     wireCardButtons();
   }
 
-  function renderProduct({id}){
+  function renderProduct({ id }){
     const p = products.find(x => String(x.id) === String(id));
     if (!p){ els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
 
-    const gallery = p.images.length ? p.images : [];
+    const gallery = p.images;
+
     els.root.innerHTML = `
       <div class="product-page">
         <div class="gallery">
@@ -185,31 +198,34 @@
                               : `<div class="badge">No image</div>`}
             ${logoHTML(p)}
           </div>
-          ${gallery.length>1 ? `
+
+          ${gallery.length > 1 ? `
           <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
             ${gallery.map((u,i)=>`
               <button class="variant ${i===0?'active':''}" data-i="${i}" role="tab" aria-selected="${i===0?'true':'false'}">
                 <img src="${esc(u)}" alt="Variant ${i+1}">
               </button>`).join('')}
-          </div>`:''}
+          </div>` : ``}
         </div>
 
         <div class="body" style="padding:16px">
           <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
-          <h2 style="margin:8px 0 6px">${esc(p.name)}</h2>
-          <div class="price" style="font-size:1.25rem">${fmt.format(p.price||0)}</div>
-          ${p.sku ? `<div class="sku">${esc(p.sku)}</div>`:''}
+          <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
+          <div class="price" style="font-size:1.25rem; text-align:center">${fmt.format(p.price||0)}</div>
+          ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
           <p class="desc">${esc(p.description||'')}</p>
-          <div class="actions">
+          <div class="actions" style="justify-content:center">
             <button data-add="${p.id}">Add to cart</button>
-            ${p.payment_url ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
-                            : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
+            ${p.payment_url
+              ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
+              : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
           </div>
-          <div style="margin-top:10px"><a href="#/">← Back to products</a></div>
+          <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
         </div>
       </div>
     `;
 
+    // Variant buttons swap main image
     const main = document.getElementById('gMain');
     const picker = document.getElementById('variantPicker');
     if (main && picker){
@@ -234,16 +250,16 @@
     const h = location.hash.replace(/^#\/?/, '');
     if (!h) return { page:'home' };
     const [p, a] = h.split('/');
-    if (p==='product' && a) return { page:'product', id: decodeURIComponent(a) };
-    if (p==='category' && a) { view.cat = a; return { page:'home' }; }
+    if (p==='product' && a)  return { page:'product', id: decodeURIComponent(a) };
+    if (p==='category' && a){ view.cat = a; return { page:'home' }; }
     return { page:'home' };
   }
 
   function navigate(){
     const r = parseRoute();
     try{
-      if (r.page==='product'){ renderProduct({ id: r.id }); }
-      else { renderHome(); }
+      if (r.page==='product') renderProduct({ id: r.id });
+      else renderHome();
     }catch(e){
       console.error('Render failed:', e);
       els.root.innerHTML = `<div style="padding:16px">Something went wrong.</div>`;
@@ -251,14 +267,18 @@
   }
   window.addEventListener('hashchange', navigate);
 
-  // ---------- Actions (cart buttons etc.) ----------
+  // ---------- Actions ----------
   function wireCardButtons(){
     document.querySelectorAll('[data-add]').forEach(btn=>{
-      btn.onclick = ()=> alert('Added to cart (placeholder)');
+      btn.onclick = ()=> { addToCart(btn.getAttribute('data-add')); };
     });
     document.querySelectorAll('[data-buy]').forEach(btn=>{
-      btn.onclick = ()=> alert('No payment link on this item. (Placeholder)');
+      btn.onclick = ()=> {
+        addToCart(btn.getAttribute('data-buy'));
+        alert('Added to cart (no payment link on this item).');
+      };
     });
+    updateCartUI();
   }
 
   // ---------- Start ----------
@@ -266,9 +286,21 @@
     try{
       await loadProducts();
       navigate();
+
+      // Theme button (optional simple toggle)
+      document.getElementById('themeBtn')?.addEventListener('click', ()=>{
+        document.documentElement.classList.toggle('light');
+      });
+
+      updateCartUI();
     }catch(e){
       console.error(e);
-      els.root.innerHTML = `<div style="padding:16px"><h3>Could not load products.</h3><p>${esc(e.message||e)}</p><p><a href="${DATA_URL}" target="_blank" rel="noopener">Open products.json</a></p></div>`;
+      els.root.innerHTML = `
+        <div style="padding:16px">
+          <h3>Could not load products.</h3>
+          <p>${esc(e.message||e)}</p>
+          <p><a href="${DATA_URL}" target="_blank" rel="noopener">Open products.json</a></p>
+        </div>`;
     }
   })();
 
