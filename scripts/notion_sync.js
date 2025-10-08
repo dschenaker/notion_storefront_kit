@@ -334,7 +334,8 @@ async function mirrorOne(url, baseName) {
         payment_url
       });
     }
-
+    console.log(`  • ${name}: images=${images.length}${logo ? ', logo=1' : ''}`);
+    
     // stable sort
     products.sort((a, b) => a.name.localeCompare(b.name));
 
