@@ -99,7 +99,33 @@ async function resolveDatabaseId() {
 
   throw new Error('Could not resolve a database. Provide NOTION_DB_ID or NOTION_DB_URL or NOTION_DB_NAME.');
 }
+// returns true if label looks like an image-y field
+function isImageyLabel(label) {
+  return /^(image|images|gallery|photos?|pictures?|pics?)$/i.test(label);
+}
 
+// try to extract *multiple* image URLs from any property payload
+function imageUrlsFromProp(prop) {
+  // reuse your existing urlsFromAny() that returns an array of URLs
+  const urls = urlsFromAny(prop) || [];
+  // keep only things that look like images (basic filter)
+  return urls.filter(u => /\.(png|jpe?g|webp|gif|svg)(\?|#|$)/i.test(u) || /image\//i.test(u));
+}
+
+// fetch page cover (Notion’s page “cover” field)
+async function getPageCoverUrl(notion, pageId) {
+  try {
+    const dash = pageId; // page ids from query are already dashed
+    const page = await notion.pages.retrieve({ page_id: dash });
+    const cover = page.cover;
+    if (!cover) return '';
+    if (cover.external?.url) return cover.external.url;
+    if (cover.file?.url)     return cover.file.url;
+    return '';
+  } catch {
+    return '';
+  }
+}
 const rt2text = (rt) => (rt || []).map(x => x?.plain_text || '').join('').trim();
 
 // Extract **array** of URLs from many Notion shapes
@@ -250,9 +276,30 @@ async function mirrorOne(url, baseName) {
       const description = V(props, 'Description') || '';
       const payment_url = V(props, 'PaymentURL') || prev.payment_url || '';
 
-      // Gather raw URLs (arrays)
-      const rawImages = (V(props, 'Image', imgHeur) || []);
-      const rawLogos  = (V(props, 'Logo',  logoHeur) || []);
+      // 1) Start with the primary Image column (may already be an array)
+let rawImages = V(props, 'Image', [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }]) || [];
+if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
+
+// 2) Scan ALL properties for additional image-like fields (files/url/etc)
+for (const [label, prop] of Object.entries(props)) {
+  // skip if it's literally our mapped Image or Logo field
+  const mappedImage = PROPERTY_MAP.Image || 'Image';
+  const mappedLogo  = PROPERTY_MAP.Logo  || 'Logo';
+  if (label === mappedImage || label === mappedLogo) continue;
+
+  if (prop?.type === 'files' && isImageyLabel(label)) {
+    rawImages.push(...imageUrlsFromProp(prop));
+  } else if (isImageyLabel(label)) {
+    rawImages.push(...imageUrlsFromProp(prop));
+  }
+}
+
+// 3) Also try the page cover
+const coverUrl = await getPageCoverUrl(notion, pg.id);
+if (coverUrl) rawImages.push(coverUrl);
+
+// Deduplicate, cap to something reasonable
+rawImages = Array.from(new Set(rawImages)).slice(0, 12);
 
       // Mirror all images (first becomes primary)
       const images = [];
