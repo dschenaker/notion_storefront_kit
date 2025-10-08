@@ -276,30 +276,30 @@ async function mirrorOne(url, baseName) {
       const description = V(props, 'Description') || '';
       const payment_url = V(props, 'PaymentURL') || prev.payment_url || '';
 
-      // 1) Start with the primary Image column (may already be an array)
-let rawImages = V(props, 'Image', [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }]) || [];
-if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
+            // 1) Start with the primary Image column (may already be an array)
+      let rawImages = V(props, 'Image', [{ includes:/^image(s)?$/i }, { includes:/photo|picture|img/i }]) || [];
+      if (!Array.isArray(rawImages)) rawImages = rawImages ? [rawImages] : [];
 
-// 2) Scan ALL properties for additional image-like fields (files/url/etc)
-for (const [label, prop] of Object.entries(props)) {
-  // skip if it's literally our mapped Image or Logo field
-  const mappedImage = PROPERTY_MAP.Image || 'Image';
-  const mappedLogo  = PROPERTY_MAP.Logo  || 'Logo';
-  if (label === mappedImage || label === mappedLogo) continue;
+      // 2) Scan ALL properties for additional image-like fields (files/url/etc)
+      for (const [label, prop] of Object.entries(props)) {
+        // skip if it's literally our mapped Image or Logo field
+        const mappedImage = PROPERTY_MAP.Image || 'Image';
+        const mappedLogo  = PROPERTY_MAP.Logo  || 'Logo';
+        if (label === mappedImage || label === mappedLogo) continue;
 
-  if (prop?.type === 'files' && isImageyLabel(label)) {
-    rawImages.push(...imageUrlsFromProp(prop));
-  } else if (isImageyLabel(label)) {
-    rawImages.push(...imageUrlsFromProp(prop));
-  }
-}
+        if (prop?.type === 'files' && isImageyLabel(label)) {
+          rawImages.push(...imageUrlsFromProp(prop));
+        } else if (isImageyLabel(label)) {
+          rawImages.push(...imageUrlsFromProp(prop));
+        }
+      }
 
-// 3) Also try the page cover
-const coverUrl = await getPageCoverUrl(notion, pg.id);
-if (coverUrl) rawImages.push(coverUrl);
+      // 3) Also try the page cover
+      const coverUrl = await getPageCoverUrl(notion, pg.id);
+      if (coverUrl) rawImages.push(coverUrl);
 
-// Deduplicate, cap to something reasonable
-rawImages = Array.from(new Set(rawImages)).slice(0, 12);
+      // Deduplicate, cap to something reasonable
+      rawImages = Array.from(new Set(rawImages)).slice(0, 12);
 
       // Mirror all images (first becomes primary)
       const images = [];
