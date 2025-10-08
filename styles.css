@@ -136,3 +136,20 @@ textarea{min-height:120px}
 .btn-link{display:inline-block;text-align:center;padding:10px 12px;border-radius:10px;background:var(--brand);color:#fff}
 .mini-strip{display:flex;gap:6px;padding:8px 12px}
 .mini-strip .mini{width:22px;height:22px;border-radius:6px;background-size:cover;background-position:center;border:1px solid var(--border);opacity:.9}
+
+/* Categories page */
+.cat-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:16px }
+@media (max-width:1100px){ .cat-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) } }
+@media (max-width:700px){ .cat-grid{ grid-template-columns:1fr } }
+.cat-card{ position:relative; border-radius:16px; overflow:hidden; border:1px solid var(--border); background:#0f141b }
+.cat-hero{ aspect-ratio:16/9; width:100%; height:auto; object-fit:cover; display:block; }
+.cat-overlay{
+  position:absolute; inset:auto 0 0 0; padding:12px;
+  background:linear-gradient(to top,rgba(0,0,0,.55),rgba(0,0,0,.0));
+  display:flex; align-items:flex-end; gap:8px;
+}
+.cat-overlay h3{ margin:0; font-size:1.05rem }
+.cat-count{ font-size:.85rem; color:#cbd6e2 }
+.clear-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+  background:#2a3340; border:1px solid var(--border); color:var(--fg); text-decoration:none; cursor:pointer; }
+.clear-chip:hover{ filter:brightness(1.1) }
