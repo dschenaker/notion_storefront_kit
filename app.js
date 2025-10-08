@@ -6,7 +6,68 @@ function renderProduct({id}){
   const gallery = (Array.isArray(p.images) && p.images.length ? p.images
                   : (p.image ? [p.image] : [])).filter(Boolean);
 
+// --- SAFE CARD RENDERER + GRID GUARDS ---
+
+// tiny helpers (should already exist in your file; if so, these no-ops won't hurt)
+const esc = (s)=>String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const fmt = new Intl.NumberFormat(undefined,{ style:'currency', currency:'USD' });
+
+function logoHTML(p){
+  if (p.logo) return `<div class="logo-badge"><img alt="" src="${esc(p.logo)}" loading="lazy"></div>`;
+  const initials = (p.name||'').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() || 'C';
+  return `<div class="logo-badge"><span class="logo-fallback">${esc(initials)}</span></div>`;
+}
+
+// Robust card renderer, tolerant of missing fields
 function cardHTML(p){
+  const imgs = (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : [])).filter(Boolean);
+  const img  = imgs[0];
+  const multi = imgs.length > 1 ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>` : '';
+  const price = (p.price!=null) ? `<div class="price">${fmt.format(p.price)}</div>` : `<span class="badge">Ask</span>`;
+  const sku = p.sku ? `<div class="sku">${esc(p.sku)}</div>` : '';
+
+  return `<article class="card">
+    <a href="#/product/${encodeURIComponent(p.id)}" aria-label="${esc(p.name||'Product')}">
+      <div class="imgwrap">
+        ${img ? `<img alt="${esc(p.name||'Product')}" src="${esc(img)}" loading="lazy">`
+               : `<div class="badge">No image</div>`}
+        ${multi}
+        ${logoHTML(p)}
+      </div>
+    </a>
+    <div class="body">
+      <div><a class="chip" href="#/category/${esc(p.categorySlug||'uncategorized')}">${esc(p.category||'Uncategorized')}</a></div>
+      <h3><a href="#/product/${encodeURIComponent(p.id)}">${esc(p.name||'Untitled')}</a></h3>
+      ${price}${sku}
+      <div class="desc">${esc(p.description||'')}</div>
+    </div>
+    <div class="actions">
+      <button data-add="${esc(p.id)}">Add</button>
+      ${p.payment_url
+          ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy</a>`
+          : `<button class="primary" data-buy="${esc(p.id)}">Buy</button>`}
+    </div>
+  </article>`;
+}
+
+// If the grid render calls cardHTML before it's defined, expose it globally as a safety net
+window.cardHTML = cardHTML;
+
+// Defensive grid render wrapper (call this instead of mapping directly if you want extra safety)
+function renderCardsInto(el, items){
+  if (!el) return;
+  try {
+    const html = (items||[]).map(p=> {
+      try { return cardHTML(p); } catch(e){ console.error('Card error', p?.id, e); return ''; }
+    }).join('');
+    el.innerHTML = html || `<p class="hint" style="padding:16px">No products.</p>`;
+  } catch(e){
+    console.error('Grid render failed:', e);
+    el.innerHTML = `<p class="hint" style="padding:16px">Something went wrong rendering products.</p>`;
+  }
+}
+
+                  function cardHTML(p){
   const imgs = (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []));
   const img  = imgs[0];
   const multi = imgs.length > 1 ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>` : '';
