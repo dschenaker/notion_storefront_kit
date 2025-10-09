@@ -1,11 +1,4 @@
-// app.js — clean build w/ Clear filter + Category tiles + fixed template blocks
-// - Loads ./data/products.json (cache-busted, no-store)
-// - Grid + product page with variant picker (p.images[])
-// - Categories filter + search + sort
-// - NEW: Clear filter chip on list; Categories page with hero tiles
-// - Cart (localStorage) with header count
-// - Theme toggle hook
-
+// app.js — full clean build with image cache-busting + all current features
 (() => {
   'use strict';
 
@@ -16,6 +9,9 @@
   const initials = s => (s || '').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || 'C';
   const slug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
   const fmt = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' });
+
+  const APP_TS = String(Date.now());
+  const ver = (u) => u ? `${u}${u.includes('?') ? '&' : '?'}v=${APP_TS}` : u;
 
   const els = { root: document.getElementById('app') || document.body };
   const DATA_URL = './data/products.json?ts=' + Date.now();
@@ -71,7 +67,7 @@
   // ---------- UI building ----------
   function logoHTML(p) {
     if (p.logo)
-      return `<div class="logo-badge"><img alt="" src="${esc(p.logo)}" loading="lazy" onerror="this.style.display='none'"></div>`;
+      return `<div class="logo-badge"><img alt="" src="${esc(ver(p.logo))}" loading="lazy" onerror="this.style.display='none'"></div>`;
     return `<div class="logo-badge"><span class="logo-fallback">${esc(initials(p.name))}</span></div>`;
   }
 
@@ -82,7 +78,7 @@
     return `<article class="card">
       <a href="#/product/${encodeURIComponent(p.id)}" aria-label="${esc(p.name)}">
         <div class="imgwrap">
-          ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy">` : `<div class="badge">No image</div>`}
+          ${img ? `<img alt="${esc(p.name)}" src="${esc(ver(img))}" loading="lazy">` : `<div class="badge">No image</div>`}
           ${multi}
           ${logoHTML(p)}
         </div>
@@ -176,7 +172,7 @@
         <div class="cat-grid">
           ${cats.map(c => `
             <a class="cat-card" href="#/category/${esc(c.slug)}" aria-label="${esc(c.name)}">
-              ${c.hero ? `<img class="cat-hero" src="${esc(c.hero)}" alt="${esc(c.name)}">`
+              ${c.hero ? `<img class="cat-hero" src="${esc(ver(c.hero))}" alt="${esc(c.name)}">`
                         : `<div class="cat-hero" style="display:flex;align-items:center;justify-content:center;background:#121821;color:#9fb0c2">No image</div>`}
               <div class="cat-overlay">
                 <h3>${esc(c.name)}</h3>
@@ -189,91 +185,88 @@
   }
 
   function renderProduct({ id }) {
-  const p = products.find(x => String(x.id) === String(id));
-  if (!p) { els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
+    const p = products.find(x => String(x.id) === String(id));
+    if (!p) { els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
 
-  const gallery = p.images;
-  const FIT_KEY = 'storefront_view_fit';              // remember preference across pages
-  let fit = localStorage.getItem(FIT_KEY) === '1';
+    const gallery = p.images;
+    const FIT_KEY = 'storefront_view_fit';
+    let fit = localStorage.getItem(FIT_KEY) === '1';
 
-  els.root.innerHTML = `
-    <div class="product-page">
-      <div class="gallery">
-        <div class="gallery-main ${fit ? 'fit' : ''}">
-          ${gallery.length ? `<img id="gMain" src="${esc(gallery[0])}" alt="${esc(p.name)}" loading="eager">`
-                            : `<div class="badge">No image</div>`}
-          ${logoHTML(p)}
+    els.root.innerHTML = `
+      <div class="product-page">
+        <div class="gallery">
+          <div class="gallery-main ${fit ? 'fit' : ''}">
+            ${gallery.length ? `<img id="gMain" src="${esc(ver(gallery[0]))}" alt="${esc(p.name)}" loading="eager">`
+                              : `<div class="badge">No image</div>`}
+            ${logoHTML(p)}
+          </div>
+
+          <div class="gallery-tools">
+            <button id="viewToggle" class="btn">View: ${fit ? 'Fit' : 'Fill'}</button>
+            ${gallery.length ? `<a id="openFull" class="btn" href="${esc(ver(gallery[0]))}" target="_blank" rel="noopener">Open</a>` : ``}
+          </div>
+
+          ${gallery.length > 1 ? `
+          <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
+            ${gallery.map((u, i) => `
+              <button class="variant ${i === 0 ? 'active' : ''}" data-i="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
+                <img src="${esc(ver(u))}" alt="Variant ${i + 1}">
+              </button>`).join('')}
+          </div>` : ``}
         </div>
 
-        <div class="gallery-tools">
-          <button id="viewToggle" class="btn">View: ${fit ? 'Fit' : 'Fill'}</button>
-          ${gallery.length ? `<a id="openFull" class="btn" href="${esc(gallery[0])}" target="_blank" rel="noopener">Open</a>` : ``}
+        <div class="body" style="padding:16px">
+          <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
+          <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
+          <div class="price" style="font-size:1.25rem; text-align:center">${fmt.format(p.price || 0)}</div>
+          ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
+          <p class="desc">${esc(p.description || '')}</p>
+          <div class="actions" style="justify-content:center">
+            <button data-add="${p.id}">Add to cart</button>
+            ${p.payment_url
+              ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
+              : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
+          </div>
+          <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
         </div>
-
-        ${gallery.length > 1 ? `
-        <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
-          ${gallery.map((u, i) => `
-            <button class="variant ${i === 0 ? 'active' : ''}" data-i="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
-              <img src="${esc(u)}" alt="Variant ${i + 1}">
-            </button>`).join('')}
-        </div>` : ``}
       </div>
+    `;
 
-      <div class="body" style="padding:16px">
-        <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
-        <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
-        <div class="price" style="font-size:1.25rem; text-align:center">${fmt.format(p.price || 0)}</div>
-        ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
-        <p class="desc">${esc(p.description || '')}</p>
-        <div class="actions" style="justify-content:center">
-          <button data-add="${p.id}">Add to cart</button>
-          ${p.payment_url
-            ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
-            : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
-        </div>
-        <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
-      </div>
-    </div>
-  `;
-
-  // Bind view toggle
-  const mainWrap = document.querySelector('.gallery-main');
-  const viewBtn  = document.getElementById('viewToggle');
-  function applyFit(){
-    mainWrap.classList.toggle('fit', fit);
-    if (viewBtn) viewBtn.textContent = `View: ${fit ? 'Fit' : 'Fill'}`;
-  }
-  viewBtn?.addEventListener('click', () => {
-    fit = !fit;
-    localStorage.setItem(FIT_KEY, fit ? '1' : '0');
-    applyFit();
-  });
-  applyFit();
-
-  // Variant thumbs swap main image + keep "Open" link current
-  const main = document.getElementById('gMain');
-  const picker = document.getElementById('variantPicker');
-  const openLink = document.getElementById('openFull');
-
-  if (main && picker){
-    picker.querySelectorAll('.variant').forEach(btn=>{
-      btn.onclick = ()=>{
-        const i = parseInt(btn.dataset.i, 10) || 0;
-        if (gallery[i]) {
-          main.src = gallery[i];
-          if (openLink) openLink.href = gallery[i];
-        }
-        picker.querySelectorAll('.variant').forEach(b=>{
-          const active = (b===btn);
-          b.classList.toggle('active', active);
-          b.setAttribute('aria-selected', active ? 'true' : 'false');
-        });
-      };
+    const mainWrap = document.querySelector('.gallery-main');
+    const viewBtn  = document.getElementById('viewToggle');
+    function applyFit(){
+      mainWrap.classList.toggle('fit', fit);
+      if (viewBtn) viewBtn.textContent = `View: ${fit ? 'Fit' : 'Fill'}`;
+    }
+    viewBtn?.addEventListener('click', () => {
+      fit = !fit;
+      localStorage.setItem(FIT_KEY, fit ? '1' : '0');
+      applyFit();
     });
-  }
+    applyFit();
 
-  wireCardButtons();
-}
+    const main = document.getElementById('gMain');
+    const picker = document.getElementById('variantPicker');
+    const openLink = document.getElementById('openFull');
+    if (main && picker){
+      picker.querySelectorAll('.variant').forEach(btn=>{
+        btn.onclick = ()=>{
+          const i = parseInt(btn.dataset.i, 10) || 0;
+          if (gallery[i]) {
+            main.src = ver(gallery[i]);
+            if (openLink) openLink.href = ver(gallery[i]);
+          }
+          picker.querySelectorAll('.variant').forEach(b=>{
+            const active = (b===btn);
+            b.classList.toggle('active', active);
+            b.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+        };
+      });
+    }
+
+    wireCardButtons();
+  }
 
   // ---------- Filters ----------
   function applyFilters() {
