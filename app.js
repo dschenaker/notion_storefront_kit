@@ -189,63 +189,91 @@
   }
 
   function renderProduct({ id }) {
-    const p = products.find(x => String(x.id) === String(id));
-    if (!p) { els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
+  const p = products.find(x => String(x.id) === String(id));
+  if (!p) { els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
 
-    const gallery = p.images;
-    els.root.innerHTML = `
-      <div class="product-page">
-        <div class="gallery">
-          <div class="gallery-main">
-            ${gallery.length ? `<img id="gMain" src="${esc(gallery[0])}" alt="${esc(p.name)}" loading="eager">`
-                              : `<div class="badge">No image</div>`}
-            ${logoHTML(p)}
-          </div>
+  const gallery = p.images;
+  const FIT_KEY = 'storefront_view_fit';              // remember preference across pages
+  let fit = localStorage.getItem(FIT_KEY) === '1';
 
-          ${gallery.length > 1 ? `
-          <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
-            ${gallery.map((u, i) => `
-              <button class="variant ${i === 0 ? 'active' : ''}" data-i="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
-                <img src="${esc(u)}" alt="Variant ${i + 1}">
-              </button>`).join('')}
-          </div>` : ``}
+  els.root.innerHTML = `
+    <div class="product-page">
+      <div class="gallery">
+        <div class="gallery-main ${fit ? 'fit' : ''}">
+          ${gallery.length ? `<img id="gMain" src="${esc(gallery[0])}" alt="${esc(p.name)}" loading="eager">`
+                            : `<div class="badge">No image</div>`}
+          ${logoHTML(p)}
         </div>
 
-        <div class="body" style="padding:16px">
-          <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
-          <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
-          <div class="price" style="font-size:1.25rem; text-align:center">${fmt.format(p.price || 0)}</div>
-          ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
-          <p class="desc">${esc(p.description || '')}</p>
-          <div class="actions" style="justify-content:center">
-            <button data-add="${p.id}">Add to cart</button>
-            ${p.payment_url
-              ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
-              : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
-          </div>
-          <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
+        <div class="gallery-tools">
+          <button id="viewToggle" class="btn">View: ${fit ? 'Fit' : 'Fill'}</button>
+          ${gallery.length ? `<a id="openFull" class="btn" href="${esc(gallery[0])}" target="_blank" rel="noopener">Open</a>` : ``}
         </div>
+
+        ${gallery.length > 1 ? `
+        <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
+          ${gallery.map((u, i) => `
+            <button class="variant ${i === 0 ? 'active' : ''}" data-i="${i}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}">
+              <img src="${esc(u)}" alt="Variant ${i + 1}">
+            </button>`).join('')}
+        </div>` : ``}
       </div>
-    `;
 
-    const main = document.getElementById('gMain');
-    const picker = document.getElementById('variantPicker');
-    if (main && picker) {
-      picker.querySelectorAll('.variant').forEach(btn => {
-        btn.onclick = () => {
-          const i = parseInt(btn.dataset.i, 10) || 0;
-          main.src = gallery[i];
-          picker.querySelectorAll('.variant').forEach(b => {
-            const active = (b === btn);
-            b.classList.toggle('active', active);
-            b.setAttribute('aria-selected', active ? 'true' : 'false');
-          });
-        };
-      });
-    }
+      <div class="body" style="padding:16px">
+        <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
+        <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
+        <div class="price" style="font-size:1.25rem; text-align:center">${fmt.format(p.price || 0)}</div>
+        ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
+        <p class="desc">${esc(p.description || '')}</p>
+        <div class="actions" style="justify-content:center">
+          <button data-add="${p.id}">Add to cart</button>
+          ${p.payment_url
+            ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
+            : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
+        </div>
+        <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
+      </div>
+    </div>
+  `;
 
-    wireCardButtons();
+  // Bind view toggle
+  const mainWrap = document.querySelector('.gallery-main');
+  const viewBtn  = document.getElementById('viewToggle');
+  function applyFit(){
+    mainWrap.classList.toggle('fit', fit);
+    if (viewBtn) viewBtn.textContent = `View: ${fit ? 'Fit' : 'Fill'}`;
   }
+  viewBtn?.addEventListener('click', () => {
+    fit = !fit;
+    localStorage.setItem(FIT_KEY, fit ? '1' : '0');
+    applyFit();
+  });
+  applyFit();
+
+  // Variant thumbs swap main image + keep "Open" link current
+  const main = document.getElementById('gMain');
+  const picker = document.getElementById('variantPicker');
+  const openLink = document.getElementById('openFull');
+
+  if (main && picker){
+    picker.querySelectorAll('.variant').forEach(btn=>{
+      btn.onclick = ()=>{
+        const i = parseInt(btn.dataset.i, 10) || 0;
+        if (gallery[i]) {
+          main.src = gallery[i];
+          if (openLink) openLink.href = gallery[i];
+        }
+        picker.querySelectorAll('.variant').forEach(b=>{
+          const active = (b===btn);
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+      };
+    });
+  }
+
+  wireCardButtons();
+}
 
   // ---------- Filters ----------
   function applyFilters() {

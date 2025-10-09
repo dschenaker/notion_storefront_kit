@@ -153,3 +153,14 @@ textarea{min-height:120px}
 .clear-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
   background:#2a3340; border:1px solid var(--border); color:var(--fg); text-decoration:none; cursor:pointer; }
 .clear-chip:hover{ filter:brightness(1.1) }
+
+/* --- Image fit/fill toggle support --- */
+.gallery-tools{
+  display:flex; gap:8px; align-items:center; padding:4px 0 8px;
+}
+.gallery-tools .btn{ background:#16202b; border:1px solid var(--border); color:var(--fg);
+  padding:8px 12px; border-radius:10px; cursor:pointer; text-decoration:none;
+}
+.gallery-main.fit img{ object-fit: contain !important; background:#0b0e12; }
+.imgwrap.fit img{ object-fit: contain !important; background:#0b0e12; } /* (only used if you want fit on cards later) */
+
