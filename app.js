@@ -102,36 +102,34 @@
 
   // Views
   function renderHome(){
-    const cats = uniqueCategoriesWithHero();
-
-    els.root.innerHTML = `
-      <main class="main">
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <input id="q" class="input" placeholder="Search products…" value="${esc(view.q)}">
-          </div>
-          <div class="toolbar-right">
-            ${view.cat ? `<a class="clear-chip" id="clearCat" href="#/">✕ Clear filter</a>` : ``}
-            <select id="sort" class="input" style="max-width:220px">
-              <option value="featured" ${view.sort==='featured'?'selected':''}>Featured</option>
-              <option value="price-asc" ${view.sort==='price-asc'?'selected':''}>Price: Low → High</option>
-              <option value="price-desc" ${view.sort==='price-desc'?'selected':''}>Price: High → Low</option>
-            </select>
-          </div>
+  els.root.innerHTML = `
+    <main class="main">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <input id="q" class="input" placeholder="Search products…" value="${esc(view.q)}">
         </div>
+        <div class="toolbar-right">
+          ${view.cat ? `<a class="clear-chip" id="clearCat" href="#/">✕ Clear filter</a>` : ``}
+          <select id="sort" class="input" style="max-width:220px">
+            <option value="featured" ${view.sort==='featured'?'selected':''}>Featured</option>
+            <option value="price-asc" ${view.sort==='price-asc'?'selected':''}>Price: Low → High</option>
+            <option value="price-desc" ${view.sort==='price-desc'?'selected':''}>Price: High → Low</option>
+          </select>
+        </div>
+      </div>
 
-        <h2>All Products</h2>
-        <div id="grid" class="grid"></div>
-      </main>
-    `;
+      <h2>All Products</h2>
+      <div id="grid" class="grid"></div>
+    </main>
+  `;
 
-    document.getElementById('q').oninput = e => { view.q = e.target.value || ''; updateGrid(); };
-    document.getElementById('sort').onchange = e => { view.sort = e.target.value; updateGrid(); };
-    const clear = document.getElementById('clearCat');
-    if (clear){ clear.onclick = (ev)=>{ ev.preventDefault(); view.cat=''; location.hash='#/'; }; }
+  document.getElementById('q').oninput = e => { view.q = e.target.value || ''; updateGrid(); };
+  document.getElementById('sort').onchange = e => { view.sort = e.target.value; updateGrid(); };
+  const clear = document.getElementById('clearCat');
+  if (clear){ clear.onclick = (ev)=>{ ev.preventDefault(); view.cat=''; location.hash='#/'; }; }
 
-    updateGrid();
-  }
+  updateGrid();
+}
 
   function updateGrid(){
     const list = applyFilters();
