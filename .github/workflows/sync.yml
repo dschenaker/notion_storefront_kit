@@ -82,3 +82,17 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Notion → products.json
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          NOTION_DB_URL: ${{ secrets.NOTION_DB_URL }}
+        run: node scripts/notion_sync.js
+
+      - name: Notion → settings.json
+        env:
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_SETTINGS_DB_ID: ${{ secrets.NOTION_SETTINGS_DB_ID }}
+          NOTION_SETTINGS_DB_URL: ${{ secrets.NOTION_SETTINGS_DB_URL }}
+          NOTION_SETTINGS_DB_NAME: ${{ secrets.NOTION_SETTINGS_DB_NAME }}
+        run: node scripts/settings_sync.js
