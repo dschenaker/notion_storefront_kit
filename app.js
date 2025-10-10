@@ -66,33 +66,46 @@
     return `this.onerror=null; console.warn('Image failed:', this.src, ${JSON.stringify(key)}); this.style.display='none'; const wrap=this.closest('.imgwrap,.gallery-main'); if(wrap&&!wrap.querySelector('.badge')){ wrap.insertAdjacentHTML('beforeend','<div class=badge>Image failed</div>'); }`;
   }
 
-  function cardHTML(p){
-    const imgs = p.images;
-    const img  = imgs[0];
-    const multi = imgs.length > 1 ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>` : '';
-    return `<article class="card">
-      <a href="#/product/${encodeURIComponent(p.id)}" aria-label="${esc(p.name)}">
-        <div class="imgwrap">
-          ${img ? `<img alt="${esc(p.name)}" src="${esc(ver(img))}" loading="lazy" onerror="${onImgErrorJS('card')}">` : `<div class="badge">No image</div>`}
-          ${multi}
-          ${logoHTML(p)}
-        </div>
-      </a>
-      <div class="body">
-        <div><a class="chip" href="#/category/${esc(p.categorySlug)}">${esc(p.category)}</a></div>
-        <h3><a href="#/product/${encodeURIComponent(p.id)}">${esc(p.name)}</a></h3>
-        <div class="price">${fmt.format(p.price||0)}</div>
-        ${p.sku ? `<div class="sku">${esc(p.sku)}</div>` : ``}
-        <div class="desc">${esc(p.description||'')}</div>
+  function cardHTML(p) {
+  const imgs = (Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []));
+  const img  = imgs[0];
+  const multi = imgs.length > 1
+    ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>`
+    : '';
+  
+  const logo = p.logo
+    ? `<span class="logo-badge"><img src="${esc(p.logo)}" alt="logo"></span>`
+    : '';
+  
+  const price = p.price ? `$${p.price.toFixed(2)}` : '';
+
+  return `
+  <article class="card">
+    <a href="#/product/${encodeURIComponent(p.id)}">
+      <div class="imgwrap">
+        ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy">`
+              : `<div class="badge">No image</div>`}
+        ${multi}
+        ${logo}
       </div>
-      <div class="actions">
-        <button data-add="${esc(p.id)}">Add</button>
-        ${p.payment_url
-          ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy</a>`
-          : `<button class="primary" data-buy="${esc(p.id)}">Buy</button>`}
-      </div>
-    </article>`;
-  }
+    </a>
+
+    <div class="body">
+      <div class="cat">${esc(p.category || '')}</div>
+      <h3>${esc(p.name || '')}</h3>
+      ${price ? `<div class="price">${price}</div>` : ''}
+      ${p.sku ? `<div class="sku">${esc(p.sku)}</div>` : ''}
+      ${p.description ? `<div class="desc">${esc(p.description)}</div>` : ''}
+    </div>
+
+    <div class="actions">
+      <button class="btn">Add</button>
+      ${p.payment_url
+        ? `<a class="btn primary btn-link" href="${esc(p.payment_url)}" target="_blank">Buy</a>`
+        : `<button class="btn primary" disabled>Buy</button>`}
+    </div>
+  </article>`;
+}
 
   function renderCardsInto(el, items){
     if (!el) return;
