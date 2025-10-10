@@ -112,51 +112,68 @@
   }
 
   // ---------- Views ----------
-  function renderHome() {
-    const cats = uniqueCategoriesWithHero();
+  function renderHome(){
+  const cats = uniqueCategoriesWithHero();
 
-    els.root.innerHTML = `
-      <div class="layout">
-        <aside class="side">
-          <input id="q" class="input" placeholder="Search products…" value="${esc(view.q)}">
-
-          <div class="side-block">
-            <h4>Categories</h4>
-            <div id="cats" class="chips">
-              ${cats.map(c => `
-                <a class="chip ${view.cat === c.slug ? 'active' : ''}" href="#/category/${esc(c.slug)}">
-                  ${esc(c.name)} <span class="muted">(${c.count})</span>
-                </a>`).join('')}
-            </div>
-            ${view.cat ? `<div style="margin-top:10px">
-              <a class="clear-chip" id="clearCat" href="#/">✕ Clear filter</a>
-            </div>` : ``}
-          </div>
-
-          <div class="side-block">
-            <h4>Sort</h4>
-            <select id="sort" class="input">
-              <option value="featured" ${view.sort === 'featured' ? 'selected' : ''}>Featured</option>
-              <option value="price-asc" ${view.sort === 'price-asc' ? 'selected' : ''}>Price: Low → High</option>
-              <option value="price-desc" ${view.sort === 'price-desc' ? 'selected' : ''}>Price: High → Low</option>
-            </select>
-          </div>
-        </aside>
-
-        <main class="main">
-          <h2>All Products</h2>
-          <div id="grid" class="grid"></div>
-        </main>
+  els.root.innerHTML = `
+    <section class="site-hero">
+      <div class="hero-inner">
+        <h1>Kage no Yōko Inc</h1>
+        <p class="hero-tag">Custom merch, events & tech — powered by Notion + Stripe</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#/categories">Browse Categories</a>
+          <a class="btn" href="#/">Shop All</a>
+        </div>
       </div>
-    `;
+    </section>
 
-    document.getElementById('q').oninput = e => { view.q = e.target.value || ''; updateGrid(); };
-    document.getElementById('sort').onchange = e => { view.sort = e.target.value; updateGrid(); };
-    const clear = document.getElementById('clearCat');
-    if (clear) clear.onclick = ev => { ev.preventDefault(); view.cat = ''; location.hash = '#/'; };
+    <div class="layout">
+      <aside class="side">
+        <input id="q" class="input" placeholder="Search products…" value="${esc(view.q)}">
 
-    updateGrid();
+        <div class="side-block">
+          <h4>Categories</h4>
+          <div id="cats" class="chips">
+            ${cats.map(c=>`
+              <a class="chip ${view.cat===c.slug?'active':''}" href="#/category/${esc(c.slug)}">
+                ${esc(c.name)} <span class="muted">(${c.count})</span>
+              </a>`).join('')}
+          </div>
+          ${view.cat ? `<div style="margin-top:10px">
+            <a class="clear-chip" id="clearCat" href="#/">✕ Clear filter</a>
+          </div>` : ``}
+        </div>
+
+        <div class="side-block">
+          <h4>Sort</h4>
+          <select id="sort" class="input">
+            <option value="featured" ${view.sort==='featured'?'selected':''}>Featured</option>
+            <option value="price-asc" ${view.sort==='price-asc'?'selected':''}>Price: Low → High</option>
+            <option value="price-desc" ${view.sort==='price-desc'?'selected':''}>Price: High → Low</option>
+          </select>
+        </div>
+      </aside>
+
+      <main class="main">
+        <h2>All Products</h2>
+        <div id="grid" class="grid"></div>
+      </main>
+    </div>
+  `;
+
+  document.getElementById('q').oninput = e => { view.q = e.target.value || ''; updateGrid(); };
+  document.getElementById('sort').onchange = e => { view.sort = e.target.value; updateGrid(); };
+  const clear = document.getElementById('clearCat');
+  if (clear){
+    clear.onclick = (ev)=>{
+      ev.preventDefault();
+      view.cat = '';
+      location.hash = '#/';
+    };
   }
+
+  updateGrid();
+}
 
   function updateGrid() {
     const list = applyFilters();

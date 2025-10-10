@@ -1,9 +1,55 @@
 /* Reset */
 *{box-sizing:border-box} html,body{height:100%}
+/* === Site Hero (uses your background image with overlay) === */
 :root{
-  --bg:#0b0f14; --panel:#0f151d; --card:#111a24; --muted:#9ab0c4;
-  --text:#eaf2fb; --brand:#7fb6ff; --accent:#6ee7b7; --border:#1f2732;
-  --danger:#ff6b6b; --shadow:0 10px 30px rgba(0,0,0,.35);
+  /* change this path if you rename or move the image */
+  --bg-image: url("./assets/bg/kage-hero.jpg");
+  --bg-overlay: rgba(0,0,0,0.45);
+  --hero-min-h: 44vh; /* tweak height here */
+}
+
+.site-hero{
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: var(--hero-min-h);
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(to bottom, var(--bg-overlay), rgba(0,0,0,0.35)),
+    var(--bg-image) center/cover no-repeat fixed;
+}
+
+.site-hero .hero-inner{
+  text-align: center;
+  padding: 32px 16px 28px;
+  max-width: 960px;
+}
+
+.site-hero h1{
+  margin: 0 0 8px;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  letter-spacing: 0.4px;
+}
+
+.site-hero .hero-tag{
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: clamp(.95rem, 2.2vw, 1.05rem);
+}
+
+.site-hero .hero-actions{
+  display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+
+.site-hero .btn{
+  background:#16202b; border:1px solid var(--border); color:var(--fg);
+  padding:10px 14px; border-radius:10px; text-decoration:none;
+}
+.site-hero .btn.primary{ background:var(--brand); color:#001019; border:none }
+
+/* Smaller hero on narrow screens */
+@media (max-width:700px){
+  :root{ --hero-min-h: 36vh; }
 }
 html[data-theme="light"]{
   --bg:#f6f8fb; --panel:#ffffff; --card:#ffffff; --muted:#5d6b79;
