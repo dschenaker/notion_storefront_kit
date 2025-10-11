@@ -1,4 +1,6 @@
 :root{
+  --link: #93c5fd;
+  --link-hover: #bfdbfe;
   --panel:#0f1216;
   --border:#1d2330;
   --brand:#4da3ff;
@@ -10,6 +12,8 @@
   --hero-url:none;
 }
 html.light{
+  --link: #1d4ed8;
+  --link-hover: #1e40af;
   --panel:#ffffff;
   --border:#e6eaf0;
   --brand:#2563eb;
@@ -21,6 +25,14 @@ html.light{
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+
+/* apply globally */
+a { color: var(--link); text-decoration: none; }
+a:hover { color: var(--link-hover); text-decoration: underline; }
+
+/* make product titles follow the same palette */
+.card .title a { color: var(--link); }
+.card .title a:hover { color: var(--link-hover); }
 
 /* header */
 header{position:sticky;top:0;z-index:10;backdrop-filter:saturate(1.2) blur(8px);background:color-mix(in srgb,var(--bg) 92%,transparent);border-bottom:1px solid var(--border)}
