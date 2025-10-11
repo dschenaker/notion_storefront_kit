@@ -1,4 +1,3 @@
-// app.js — products + settings (background, multiplier, admin)
 (() => {
   'use strict';
 
@@ -29,7 +28,6 @@
   async function loadJSON(u){ const r = await fetch(u, {cache:'no-store'}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
 
   async function loadAll(){
-    // settings first so theme/bg apply even if products fail
     try {
       const s = await loadJSON(SET_URL);
       settings = { ...settings, ...(s||{}) };
@@ -51,12 +49,10 @@
     // theme hint
     if (settings.theme === 'light') document.documentElement.classList.add('light');
     if (settings.theme === 'dark')  document.documentElement.classList.remove('light');
-
-    // primary color (optional)
+    // primary color
     if (settings.primary_color){
       document.documentElement.style.setProperty('--brand', settings.primary_color);
     }
-
     // background hero
     if (settings.background_url){
       document.documentElement.style.setProperty('--hero-url', `url("${settings.background_url}")`);
@@ -116,10 +112,10 @@
         <div class="desc">${esc(p.description||'')}</div>
       </div>
       <div class="actions">
-        <button data-add="${esc(p.id)}">Add</button>
+        <button class="btn" data-add="${esc(p.id)}">Add</button>
         ${p.payment_url
-          ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy</a>`
-          : `<button class="primary" data-buy="${esc(p.id)}">Buy</button>`}
+          ? `<a class="btn primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy</a>`
+          : `<button class="btn primary" data-buy="${esc(p.id)}">Buy</button>`}
       </div>
     </article>`;
   }
@@ -247,10 +243,10 @@
           ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
           <p class="desc">${esc(p.description||'')}</p>
           <div class="actions" style="justify-content:center">
-            <button data-add="${p.id}">Add to cart</button>
+            <button class="btn" data-add="${p.id}">Add to cart</button>
             ${p.payment_url
-              ? `<a class="primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
-              : `<button class="primary" data-buy="${p.id}">Buy now</button>`}
+              ? `<a class="btn primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
+              : `<button class="btn primary" data-buy="${p.id}">Buy now</button>`}
           </div>
           <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
         </div>

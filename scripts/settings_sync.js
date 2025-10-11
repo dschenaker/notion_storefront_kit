@@ -1,6 +1,3 @@
-// scripts/settings_sync.js
-// Export a single-row "Store Settings" Notion DB → data/settings.json
-
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,6 +23,7 @@ function extractIdFromUrl(url) {
   const m = (url || '').match(/[0-9a-f]{32}/i);
   return m ? m[0] : '';
 }
+
 async function resolveDatabaseId() {
   if (RAW_DB_ID) return RAW_DB_ID.replace(/-/g, '');
   const fromUrl = extractIdFromUrl(RAW_DB_URL);
@@ -55,7 +53,6 @@ function firstFileUrl(files=[]) {
 (async () => {
   try {
     const dbid = await resolveDatabaseId();
-    // get first page (any)
     const q = await notion.databases.query({ database_id: dbid, page_size: 1 });
     const row = q.results?.[0];
     if (!row) throw new Error('Settings DB has no rows');
