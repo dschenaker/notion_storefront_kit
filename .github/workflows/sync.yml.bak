@@ -1,9 +1,9 @@
-name: Notion Sync & Deploy
+name: NSK Sync & Deploy (v3)
 
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "15 3 * * *"   # daily at 03:15 UTC
+    - cron: "15 3 * * *"
 
 permissions:
   contents: write
@@ -18,44 +18,17 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Workflow version
+        run: echo "Workflow commit $GITHUB_SHA"
 
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+        with: { node-version: 20 }
 
       - name: Install deps
         run: npm ci || npm i
 
-      # ✅ Safe secret check (no echoing the secrets, no fragile bash tests on masked values)
-      - name: Verify required secrets (no leak)
-        env:
-          NOTION_TOKEN:           ${{ secrets.NOTION_TOKEN }}
-          NOTION_DB_ID:           ${{ secrets.NOTION_DB_ID }}
-          NOTION_SETTINGS_DB_ID:  ${{ secrets.NOTION_SETTINGS_DB_ID }}
-          # optional:
-          NOTION_DB_URL:          ${{ secrets.NOTION_DB_URL }}
-          NOTION_SETTINGS_DB_URL: ${{ secrets.NOTION_SETTINGS_DB_URL }}
-        run: |
-          set -euo pipefail
-          missing=0
-          for key in NOTION_TOKEN NOTION_DB_ID NOTION_SETTINGS_DB_ID; do
-            if [ -z "${!key:-}" ]; then
-              echo "::error title=Missing secret::${key} is not set"
-              missing=1
-            else
-              echo "${key} present"
-            fi
-          done
-          for key in NOTION_DB_URL NOTION_SETTINGS_DB_URL; do
-            if [ -n "${!key:-}" ]; then
-              echo "${key} provided"
-            else
-              echo "${key} not provided (optional)"
-            fi
-          done
-          [ "$missing" -eq 0 ]
-
+      # No secret-check step at all
       - name: Notion → products.json
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
@@ -64,9 +37,7 @@ jobs:
         run: |
           set -euxo pipefail
           node --unhandled-rejections=strict scripts/notion_sync.js
-          echo "---- head data/products.json ----"
           head -n 40 data/products.json || true
-          echo "---- media listing ----"
           ls -la assets/media || true
 
       - name: Notion → settings.json
@@ -77,9 +48,7 @@ jobs:
         run: |
           set -euxo pipefail
           node --unhandled-rejections=strict scripts/settings_sync.js
-          echo "---- head data/settings.json ----"
           head -n 40 data/settings.json || true
-          echo "---- data dir ----"
           ls -la data
 
       - name: Stamp build time
@@ -87,8 +56,7 @@ jobs:
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./
+        with: { path: ./ }
 
   deploy:
     needs: sync
