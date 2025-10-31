@@ -3,7 +3,7 @@ name: Notion Sync & Deploy
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "15 3 * * *"
+    - cron: "15 3 * * *"   # daily at 03:15 UTC
 
 permissions:
   contents: write
@@ -27,14 +27,34 @@ jobs:
       - name: Install deps
         run: npm ci || npm i
 
-      - name: Show secret presence (masked)
-        shell: bash
+      # ✅ Safe secret check (no echoing the secrets, no fragile bash tests on masked values)
+      - name: Verify required secrets (no leak)
+        env:
+          NOTION_TOKEN:           ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID:           ${{ secrets.NOTION_DB_ID }}
+          NOTION_SETTINGS_DB_ID:  ${{ secrets.NOTION_SETTINGS_DB_ID }}
+          # optional:
+          NOTION_DB_URL:          ${{ secrets.NOTION_DB_URL }}
+          NOTION_SETTINGS_DB_URL: ${{ secrets.NOTION_SETTINGS_DB_URL }}
         run: |
-          echo "NOTION_TOKEN set?         $([[ -n \"${{ secrets.NOTION_TOKEN }}\" ]] && echo yes || echo no)"
-          echo "NOTION_DB_ID set?         $([[ -n \"${{ secrets.NOTION_DB_ID }}\" ]] && echo yes || echo no)"
-          echo "NOTION_DB_URL set?        $([[ -n \"${{ secrets.NOTION_DB_URL }}\" ]] && echo yes || echo no)"
-          echo "SETTINGS_DB_ID set?       $([[ -n \"${{ secrets.NOTION_SETTINGS_DB_ID }}\" ]] && echo yes || echo no)"
-          echo "SETTINGS_DB_URL set?      $([[ -n \"${{ secrets.NOTION_SETTINGS_DB_URL }}\" ]] && echo yes || echo no)"
+          set -euo pipefail
+          missing=0
+          for key in NOTION_TOKEN NOTION_DB_ID NOTION_SETTINGS_DB_ID; do
+            if [ -z "${!key:-}" ]; then
+              echo "::error title=Missing secret::${key} is not set"
+              missing=1
+            else
+              echo "${key} present"
+            fi
+          done
+          for key in NOTION_DB_URL NOTION_SETTINGS_DB_URL; do
+            if [ -n "${!key:-}" ]; then
+              echo "${key} provided"
+            else
+              echo "${key} not provided (optional)"
+            fi
+          done
+          [ "$missing" -eq 0 ]
 
       - name: Notion → products.json
         env:
