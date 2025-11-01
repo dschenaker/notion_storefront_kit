@@ -71,6 +71,17 @@ jobs:
         with:
           path: ./
 
+      - name: Stripe → upsert products & payment links (new/missing only)
+        if: ${{ success() }}
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
+          STRIPE_MODE: test
+        run: |
+          set -euxo pipefail
+          node --unhandled-rejections=strict scripts/stripe_sync.js
+
   deploy:
     needs: sync
     runs-on: ubuntu-latest
