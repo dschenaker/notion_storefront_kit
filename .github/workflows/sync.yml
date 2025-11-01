@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -27,44 +28,40 @@ jobs:
         run: npm ci || npm i
 
       - name: Check required secrets exist
-        env:
-          HAS_TOKEN: ${{ secrets.NOTION_TOKEN != '' }}
-          HAS_DBID: ${{ secrets.NOTION_DB_ID != '' || secrets.NOTION_DB_URL != '' }}
-          HAS_SETID: ${{ secrets.NOTION_SETTINGS_DB_ID != '' || secrets.NOTION_SETTINGS_DB_URL != '' }}
+        shell: bash
         run: |
-          node -e "
-            const ok = process.env.HAS_TOKEN==='true' && process.env.HAS_DBID==='true' && process.env.HAS_SETID==='true';
-            console.log('NOTION_TOKEN:', process.env.HAS_TOKEN==='true' ? 'present' : 'MISSING');
-            console.log('Products DB (ID or URL):', process.env.HAS_DBID==='true' ? 'present' : 'MISSING');
-            console.log('Settings DB (ID or URL):', process.env.HAS_SETID==='true' ? 'present' : 'MISSING');
-            if(!ok){ process.exit(1); }
-          "
+          chk() { val="${1}"; name="${2}"; if [ -z "${val}" ]; then
+            echo "❌ Missing secret: ${name}"; exit 1; else echo "✅ ${name} present"; fi; }
+          chk "${{ secrets.NOTION_TOKEN }}" "NOTION_TOKEN"
+          chk "${{ secrets.NOTION_DB_ID }}" "NOTION_DB_ID"
+          echo "ℹ️ Skipping settings.json sync for now."
 
-      - name: Notion → products.json
+      - name: Prep data dir (clean products.json)
+        run: |
+          mkdir -p data
+          rm -f data/products.json
+
+      - name: Notion → products.json (instrumented)
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
-          NOTION_DB_URL: ${{ secrets.NOTION_DB_URL }}
         run: |
           set -euo pipefail
           node --unhandled-rejections=strict scripts/notion_sync.js
           echo "---- head data/products.json ----"
           head -n 40 data/products.json || true
-          echo "---- media listing ----"
-          ls -la assets/media || true
+          echo "---- quick count ----"
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('data/products.json','utf8'));console.log('Product count:', Array.isArray(p)?p.length:(p.items||[]).length||0);"
 
-      - name: Notion → settings.json
-        env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          NOTION_SETTINGS_DB_ID: ${{ secrets.NOTION_SETTINGS_DB_ID }}
-          NOTION_SETTINGS_DB_URL: ${{ secrets.NOTION_SETTINGS_DB_URL }}
+      - name: Ensure settings.json exists (temporary)
         run: |
-          set -euo pipefail
-          node --unhandled-rejections=strict scripts/settings_sync.js
-          echo "---- head data/settings.json ----"
-          head -n 40 data/settings.json || true
-          echo "---- data dir ----"
-          ls -la data
+          mkdir -p data
+          if [ ! -s data/settings.json ]; then
+            echo '{"siteTitle":"Notion Storefront","brand":{"name":"Default"},"theme":{"primary":"#111827"}}' > data/settings.json
+            echo "⚠️ Created minimal data/settings.json (temporary)"
+          else
+            echo "✅ Using existing data/settings.json"
+          fi
 
       - name: Stamp build time
         run: echo "$(date -u +'%Y-%m-%d %H:%M:%S') UTC" > data/last_sync.txt
