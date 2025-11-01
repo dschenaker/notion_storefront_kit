@@ -11,3 +11,4 @@ tmp/
 .cache/
 
 # GitHub metadata (unless you really want Actions)
+*.bak
