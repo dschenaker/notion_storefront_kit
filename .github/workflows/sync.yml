@@ -30,37 +30,35 @@ jobs:
       - name: Check required secrets exist
         shell: bash
         run: |
-          chk() { val="${1}"; name="${2}"; if [ -z "${val}" ]; then
-            echo "❌ Missing secret: ${name}"; exit 1; else echo "✅ ${name} present"; fi; }
-          chk "${{ secrets.NOTION_TOKEN }}" "NOTION_TOKEN"
-          chk "${{ secrets.NOTION_DB_ID }}" "NOTION_DB_ID"
-          echo "ℹ️ Skipping settings.json sync for now."
+          chk() {
+            val="${!1}"; name="$2";
+            if [ -z "$val" ]; then
+              echo "❌ Missing secret: $name"; exit 1;
+            fi
+          }
+          chk NOTION_TOKEN "NOTION_TOKEN"
+          chk NOTION_DB_ID "NOTION_DB_ID"
+          echo "✅ All required secrets found"
 
       - name: Prep data dir (clean products.json)
         run: |
           mkdir -p data
-          rm -f data/products.json
+          rm -f data/products.json || true
 
       - name: Notion → products.json (instrumented)
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           node --unhandled-rejections=strict scripts/notion_sync.js
-          echo "---- head data/products.json ----"
-          head -n 40 data/products.json || true
-          echo "---- quick count ----"
-          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('data/products.json','utf8'));console.log('Product count:', Array.isArray(p)?p.length:(p.items||[]).length||0);"
+          echo "✅ Exported Notion → data/products.json"
 
       - name: Ensure settings.json exists (temporary)
         run: |
           mkdir -p data
-          if [ ! -s data/settings.json ]; then
-            echo '{"siteTitle":"Notion Storefront","brand":{"name":"Default"},"theme":{"primary":"#111827"}}' > data/settings.json
-            echo "⚠️ Created minimal data/settings.json (temporary)"
-          else
-            echo "✅ Using existing data/settings.json"
+          if [ ! -f data/settings.json ]; then
+            echo "{}" > data/settings.json
           fi
 
       - name: Stamp build time
@@ -71,13 +69,30 @@ jobs:
         with:
           path: ./
 
-      - name: Stripe → upsert products & payment links (new/missing only)
+      # ======================================================
+      # Stripe (TEST) → upsert to "Stripe Link (Test)" field
+      # ======================================================
+      - name: Stripe (test) → upsert products & payment links
         if: ${{ success() }}
         env:
-          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY_TEST }}
+          STRIPE_MODE: test
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
-          STRIPE_MODE: test
+        run: |
+          set -euxo pipefail
+          node --unhandled-rejections=strict scripts/stripe_sync.js
+
+      # ======================================================
+      # Stripe (LIVE) → upsert to "PaymentURL" field
+      # ======================================================
+      - name: Stripe (live) → upsert products & payment links
+        if: ${{ success() }}
+        env:
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY_LIVE }}
+          STRIPE_MODE: live
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DB_ID: ${{ secrets.NOTION_DB_ID }}
         run: |
           set -euxo pipefail
           node --unhandled-rejections=strict scripts/stripe_sync.js
