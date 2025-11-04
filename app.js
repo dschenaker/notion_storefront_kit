@@ -1,334 +1,201 @@
-(() => {
-  'use strict';
+// app.js — storefront loader (client-filtered)
 
-  // Helpers
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const initials = s => (s||'').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase() || 'C';
-  const slug = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-  const fmtUSD = v => new Intl.NumberFormat(undefined,{style:'currency',currency:'USD'}).format(v||0);
+/* =========================
+   0) Small utilities
+   ========================= */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const els = { root: document.getElementById('app') || document.body };
-  const PROD_URL = './data/products.json?ts=' + Date.now();
-  const SET_URL  = './data/settings.json?ts=' + Date.now();
+function fmtPrice(price, currency = "usd") {
+  try {
+    const cur = (currency || "usd").toUpperCase();
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: cur,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+  } catch {
+    return `$${Number(price).toFixed(2)}`;
+  }
+}
 
-  // State
-  let products = [];
-  let settings = {
-    hero_title: '',
-    hero_subtitle: '',
-    background_url: '',
-    theme: '',
-    price_multiplier: 1,
-    primary_color: '',
-    notion_settings_url: ''
+function getUrlParam(name) {
+  const u = new URL(window.location.href);
+  const v = u.searchParams.get(name);
+  return v ? v.trim() : "";
+}
+
+function normalizeSkus(list) {
+  return (list || [])
+    .map(s => (s || "").toString().trim())
+    .filter(Boolean);
+}
+
+/* =========================
+   1) Client filter (no-break)
+   ========================= */
+/**
+ * Priority:
+ * 1) window.STORE.SKU_ALLOWLIST (array)
+ * 2) window.STORE.SKU_PREFIX (string)
+ * 3) URL: ?sku=SKU1,SKU2 or ?prefix=CYS-
+ * Always keeps only { active: true }.
+ */
+function buildFilter() {
+  const cfg = window.STORE || {};
+  const urlSkuList = getUrlParam("sku");
+  const urlPrefix  = getUrlParam("prefix");
+
+  const urlAllow = urlSkuList
+    ? urlSkuList.split(",").map(s => s.trim()).filter(Boolean)
+    : null;
+
+  return {
+    allowlist: normalizeSkus(urlAllow || cfg.SKU_ALLOWLIST || null),
+    prefix: (urlPrefix || cfg.SKU_PREFIX || "").trim(),
   };
-  let view = { q:'', cat:'', sort:'featured' };
+}
 
-  // Data
-  async function loadJSON(u){ const r = await fetch(u, {cache:'no-store'}); if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }
+function applyClientFilter(products) {
+  const { allowlist, prefix } = buildFilter();
 
-  async function loadAll(){
-    try {
-      const s = await loadJSON(SET_URL);
-      settings = { ...settings, ...(s||{}) };
-      applySettings();
-    } catch(e){
-      console.warn('Settings missing (ok for first run):', e.message||e);
-    }
+  let filtered = Array.isArray(products)
+    ? products.filter(p => p && p.active !== false)
+    : [];
 
-    const raw = await loadJSON(PROD_URL);
-    products = (raw||[]).map(p => ({
-      ...p,
-      category: p.category || 'Uncategorized',
-      categorySlug: slug(p.category || 'Uncategorized'),
-      images: Array.isArray(p.images)&&p.images.length ? p.images : (p.image ? [p.image] : [])
-    }));
+  if (allowlist && allowlist.length) {
+    const set = new Set(allowlist);
+    filtered = filtered.filter(
+      p => set.has((p.sku || "").toString().trim())
+    );
+  } else if (prefix) {
+    filtered = filtered.filter(
+      p => (p.sku || "").toString().trim().startsWith(prefix)
+    );
   }
 
-  function applySettings(){
-    // theme hint
-    if (settings.theme === 'light') document.documentElement.classList.add('light');
-    if (settings.theme === 'dark')  document.documentElement.classList.remove('light');
-    // primary color
-    if (settings.primary_color){
-      document.documentElement.style.setProperty('--brand', settings.primary_color);
-    }
-    // background hero
-    if (settings.background_url){
-      document.documentElement.style.setProperty('--hero-url', `url("${settings.background_url}")`);
-      document.documentElement.classList.add('has-hero');
-    } else {
-      document.documentElement.classList.remove('has-hero');
-      document.documentElement.style.removeProperty('--hero-url');
-    }
+  return filtered;
+}
+
+/* =========================
+   2) Data loading
+   ========================= */
+async function loadProducts() {
+  const cfg = window.STORE || {};
+  const url = cfg.PRODUCTS_JSON || "data/products.json";
+
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+  let products = await res.json();
+  products = applyClientFilter(products);
+  return products;
+}
+
+/* =========================
+   3) Rendering
+   ========================= */
+function ensureContainer() {
+  // Try a few common hooks. If none exists, create a grid in <main>.
+  let root =
+    $('[data-products]') ||
+    $('#products') ||
+    $('.products') ||
+    $('main');
+
+  if (!root) {
+    root = document.createElement('main');
+    document.body.appendChild(root);
   }
 
-  // Cart
-  const CART_KEY='storefront_cart';
-  const readCart=()=>{ try{return JSON.parse(localStorage.getItem(CART_KEY)||'[]');}catch{return[];} };
-  const writeCart=items=>{ localStorage.setItem(CART_KEY, JSON.stringify(items||[])); updateCartUI(); };
-  const addToCart=id=>{ const items=readCart(); items.push(String(id)); writeCart(items); };
-  const cartCount=()=> readCart().length;
-  const updateCartUI=()=>{ const el=document.getElementById('cartCount'); if(el) el.textContent=String(cartCount()); };
-
-  // Derived
-  function uniqueCategoriesWithHero(){
-    const map=new Map();
-    for(const p of products){
-      const name=p.category||'Uncategorized';
-      const entry=map.get(name)||{count:0,slug:slug(name),hero:''};
-      entry.count++; if(!entry.hero && p.images?.[0]) entry.hero=p.images[0];
-      map.set(name,entry);
-    }
-    return [...map.entries()].map(([name,meta])=>({name,...meta})).sort((a,b)=>a.name.localeCompare(b.name));
+  // If root is <main>, add a grid container inside for consistent layout
+  let grid = $('[data-grid]', root);
+  if (!grid) {
+    grid = document.createElement('div');
+    grid.setAttribute('data-grid', '');
+    grid.style.display = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(240px, 1fr))';
+    grid.style.gap = '16px';
+    grid.style.alignItems = 'stretch';
+    root.appendChild(grid);
   }
+  return grid;
+}
 
-  // UI helpers
-  function logoHTML(p){
-    if (p.logo) return `<div class="logo-badge"><img src="${esc(p.logo)}" alt="" loading="lazy" onerror="this.style.display='none'"></div>`;
-    return `<div class="logo-badge"><span class="logo-fallback">${esc(initials(p.name))}</span></div>`;
-  }
+function cardHTML(p) {
+  const name  = p.name || p.sku || 'Product';
+  const price = typeof p.price === 'number'
+    ? fmtPrice(p.price, p.currency)
+    : '';
+  const link  = p.link || '#';
+  const sku   = p.sku ? String(p.sku) : '';
 
-  function cardHTML(p){
-    const imgs = Array.isArray(p.images) && p.images.length ? p.images : (p.image ? [p.image] : []);
-    const img  = imgs[0];
-    const multi = imgs.length>1 ? `<span class="multi-badge" title="${imgs.length} images">${imgs.length}×</span>` : '';
-    const price = fmtUSD((p.price||0) * (Number(settings.price_multiplier)||1));
+  // Image support (optional fields): p.image, p.images[0], or nothing
+  const img = p.image || (Array.isArray(p.images) ? p.images[0] : '');
+  const imgTag = img
+    ? `<div class="card__media"><img src="${img}" alt="${name}" loading="lazy"></div>`
+    : `<div class="card__media card__media--placeholder"></div>`;
 
-    return `
+  return `
     <article class="card">
-      <a href="#/product/${encodeURIComponent(p.id)}">
-        <div class="imgwrap">
-          ${img ? `<img alt="${esc(p.name)}" src="${esc(img)}" loading="lazy">` : `<div class="badge">No image</div>`}
-          ${multi}
-          ${logoHTML(p)}
+      ${imgTag}
+      <div class="card__body">
+        <h3 class="card__title" title="${name}">${name}</h3>
+        <div class="card__meta">
+          ${sku ? `<span class="card__sku" title="SKU">${sku}</span>` : ``}
+          ${price ? `<span class="card__price">${price}</span>` : ``}
         </div>
-      </a>
-      <div class="body">
-        <div><a class="chip" href="#/category/${esc(p.categorySlug)}">${esc(p.category)}</a></div>
-        <h3><a href="#/product/${encodeURIComponent(p.id)}">${esc(p.name)}</a></h3>
-        <div class="price">${price}</div>
-        ${p.sku ? `<div class="sku">${esc(p.sku)}</div>` : ``}
-        <div class="desc">${esc(p.description||'')}</div>
+        <a class="card__cta" href="${link}" target="_blank" rel="noopener">Buy</a>
       </div>
-      <div class="actions">
-        <button class="btn" data-add="${esc(p.id)}">Add</button>
-        ${p.payment_url
-          ? `<a class="btn primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy</a>`
-          : `<button class="btn primary" data-buy="${esc(p.id)}">Buy</button>`}
-      </div>
-    </article>`;
-  }
+    </article>
+  `;
+}
 
-  function renderCardsInto(el, items){
-    el.innerHTML = (items||[]).map(cardHTML).join('') || `<p class="hint" style="padding:16px">No products.</p>`;
-  }
+function injectStylesOnce() {
+  if ($('#__storefront_inline_styles')) return;
+  const css = `
+  [data-grid] .card{display:flex;flex-direction:column;border:1px solid #e6e6e6;border-radius:12px;overflow:hidden;background:#fff}
+  .card__media{aspect-ratio:4/3;background:#fafafa;display:flex;align-items:center;justify-content:center}
+  .card__media img{width:100%;height:100%;object-fit:cover}
+  .card__media--placeholder::after{content:"";width:38%;height:38%;background:repeating-linear-gradient(45deg,#eee,#eee 8px,#f6f6f6 8px,#f6f6f6 16px);border-radius:8px}
+  .card__body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+  .card__title{font-size:1rem;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+  .card__meta{display:flex;justify-content:space-between;gap:8px;color:#555;font-size:.9rem}
+  .card__sku{opacity:.75}
+  .card__price{font-weight:600}
+  .card__cta{margin-top:auto;display:inline-block;text-align:center;text-decoration:none;background:#111;color:#fff;padding:10px 12px;border-radius:10px}
+  .card__cta:hover{background:#000}
+  `;
+  const el = document.createElement('style');
+  el.id = '__storefront_inline_styles';
+  el.textContent = css;
+  document.head.appendChild(el);
+}
 
-  // VIEWS
-  function renderHero(){
-    if (!document.documentElement.classList.contains('has-hero')) return '';
-    const title = esc(settings.hero_title || '');
-    const sub   = esc(settings.hero_subtitle || '');
-    if (!title && !sub) return '';
-    return `
-      <section class="hero">
-        <div class="hero__overlay">
-          ${title ? `<h1 class="hero__title">${title}</h1>` : ``}
-          ${sub   ? `<p class="hero__sub">${sub}</p>` : ``}
-        </div>
-      </section>
-    `;
-  }
+async function render() {
+  injectStylesOnce();
+  const grid = ensureContainer();
 
-  function renderHome(){
-    els.root.innerHTML = `
-      ${renderHero()}
-      <main class="main">
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <input id="q" class="input" placeholder="Search products…" value="${esc(view.q)}">
-          </div>
-          <div class="toolbar-right">
-            ${view.cat ? `<a class="clear-chip" id="clearCat" href="#/">✕ Clear filter</a>` : ``}
-            <select id="sort" class="input" style="max-width:220px">
-              <option value="featured" ${view.sort==='featured'?'selected':''}>Featured</option>
-              <option value="price-asc" ${view.sort==='price-asc'?'selected':''}>Price: Low → High</option>
-              <option value="price-desc" ${view.sort==='price-desc'?'selected':''}>Price: High → Low</option>
-            </select>
-          </div>
-        </div>
+  // tiny skeleton
+  grid.innerHTML = `<div style="opacity:.6">Loading products…</div>`;
 
-        <h2>All Products</h2>
-        <div id="grid" class="grid"></div>
-      </main>
-    `;
-    document.getElementById('q').oninput = e => { view.q = e.target.value || ''; updateGrid(); };
-    document.getElementById('sort').onchange = e => { view.sort = e.target.value; updateGrid(); };
-    const clear = document.getElementById('clearCat');
-    if (clear){ clear.onclick = (ev)=>{ ev.preventDefault(); view.cat=''; location.hash='#/'; }; }
-    updateGrid();
-  }
+  try {
+    const items = await loadProducts();
 
-  function updateGrid(){
-    let list = products.slice();
-    if (view.q){
-      const q = view.q.toLowerCase();
-      list = list.filter(p =>
-        (p.name||'').toLowerCase().includes(q) ||
-        (p.sku||'').toLowerCase().includes(q) ||
-        (p.category||'').toLowerCase().includes(q) ||
-        (p.description||'').toLowerCase().includes(q)
-      );
+    if (!items.length) {
+      grid.innerHTML = `<div style="opacity:.6">No products found for this storefront.</div>`;
+      return;
     }
-    if (view.cat) list = list.filter(p => p.categorySlug === view.cat);
-    switch (view.sort){
-      case 'price-asc':  list.sort((a,b)=>(a.price||0)-(b.price||0)); break;
-      case 'price-desc': list.sort((a,b)=>(b.price||0)-(a.price||0)); break;
-      default:           list.sort((a,b)=>a.name.localeCompare(b.name));
-    }
-    renderCardsInto(document.getElementById('grid'), list);
-    wireCardButtons();
+
+    grid.innerHTML = items.map(cardHTML).join('');
+
+  } catch (err) {
+    console.error(err);
+    grid.innerHTML = `<div style="color:#b00">Error loading products. Check the console for details.</div>`;
   }
+}
 
-  function renderCategories(){
-    const cats = uniqueCategoriesWithHero();
-    els.root.innerHTML = `
-      ${renderHero()}
-      <main class="main">
-        <h2>Categories</h2>
-        <div class="cat-grid">
-          ${cats.map(c=>`
-            <a class="cat-card" href="#/category/${esc(c.slug)}" aria-label="${esc(c.name)}">
-              ${c.hero ? `<img class="cat-hero" src="${esc(c.hero)}" alt="${esc(c.name)}">`
-                        : `<div class="cat-hero" style="display:flex;align-items:center;justify-content:center;background:#121821;color:#9fb0c2">No image</div>`}
-              <div class="cat-overlay">
-                <h3>${esc(c.name)}</h3>
-                <span class="cat-count">(${c.count})</span>
-              </div>
-            </a>`).join('')}
-        </div>
-      </main>
-    `;
-  }
-
-  function renderProduct({ id }){
-    const p = products.find(x => String(x.id) === String(id));
-    if (!p){ els.root.innerHTML = `<div style="padding:16px">Product not found.</div>`; return; }
-    const gallery = p.images || [];
-    const price = fmtUSD((p.price||0) * (Number(settings.price_multiplier)||1));
-
-    els.root.innerHTML = `
-      ${renderHero()}
-      <div class="product-page">
-        <div class="gallery">
-          <div class="gallery-main">
-            ${gallery.length ? `<img id="gMain" src="${esc(gallery[0])}" alt="${esc(p.name)}" loading="eager">`
-                              : `<div class="badge">No image</div>`}
-            ${logoHTML(p)}
-          </div>
-
-          ${gallery.length > 1 ? `
-          <div class="variant-picker" id="variantPicker" role="tablist" aria-label="Variants">
-            ${gallery.map((u,i)=>`
-              <button class="variant ${i===0?'active':''}" data-i="${i}" role="tab" aria-selected="${i===0?'true':'false'}">
-                <img src="${esc(u)}" alt="Variant ${i+1}">
-              </button>`).join('')}
-          </div>` : ``}
-        </div>
-
-        <div class="body" style="padding:16px">
-          <a class="chip" href="#/category/${p.categorySlug}">${esc(p.category)}</a>
-          <h2 style="margin:8px 0 6px; text-align:center">${esc(p.name)}</h2>
-          <div class="price" style="font-size:1.25rem; text-align:center">${price}</div>
-          ${p.sku ? `<div class="sku" style="text-align:center">${esc(p.sku)}</div>` : ``}
-          <p class="desc">${esc(p.description||'')}</p>
-          <div class="actions" style="justify-content:center">
-            <button class="btn" data-add="${p.id}">Add to cart</button>
-            ${p.payment_url
-              ? `<a class="btn primary btn-link" href="${esc(p.payment_url)}" target="_blank" rel="noopener">Buy now</a>`
-              : `<button class="btn primary" data-buy="${p.id}">Buy now</button>`}
-          </div>
-          <div style="margin-top:10px; text-align:center"><a href="#/">← Back to products</a></div>
-        </div>
-      </div>
-    `;
-
-    const picker = document.getElementById('variantPicker');
-    const main = document.getElementById('gMain');
-    if (picker && main){
-      picker.querySelectorAll('.variant').forEach(btn=>{
-        btn.onclick = ()=>{
-          const i = parseInt(btn.dataset.i,10)||0;
-          if (gallery[i]) main.src = gallery[i];
-          picker.querySelectorAll('.variant').forEach(b=>{
-            const active = (b===btn);
-            b.classList.toggle('active', active);
-            b.setAttribute('aria-selected', active ? 'true' : 'false');
-          });
-        };
-      });
-    }
-    wireCardButtons();
-  }
-
-  function renderAdmin(){
-    els.root.innerHTML = `
-      <main class="main">
-        <h2>Admin</h2>
-        <p>All settings come from your Notion <em>Store Settings</em> database.</p>
-        <ul>
-          <li><strong>Hero Title:</strong> ${esc(settings.hero_title||'')}</li>
-          <li><strong>Hero Subtitle:</strong> ${esc(settings.hero_subtitle||'')}</li>
-          <li><strong>Background URL:</strong> ${settings.background_url ? `<a href="${esc(settings.background_url)}" target="_blank" rel="noopener">open</a>` : '—'}</li>
-          <li><strong>Theme:</strong> ${esc(settings.theme||'')}</li>
-          <li><strong>Price Multiplier:</strong> ${Number(settings.price_multiplier||1)}</li>
-          <li><strong>Primary Color:</strong> ${esc(settings.primary_color||'')}</li>
-        </ul>
-        ${settings.notion_settings_url ? `<p><a class="btn" href="${esc(settings.notion_settings_url)}" target="_blank" rel="noopener">Open Notion Settings</a></p>`:''}
-        <p><a class="btn" href="#/">← Back</a></p>
-      </main>
-    `;
-  }
-
-  // Routing
-  function parseRoute(){
-    const h = location.hash.replace(/^#\/?/, '');
-    if (!h) return { page:'home' };
-    const [p, a] = h.split('/');
-    if (p==='product' && a)  return { page:'product', id: decodeURIComponent(a) };
-    if (p==='category' && a){ view.cat = a; return { page:'home' }; }
-    if (p==='categories')    return { page:'categories' };
-    if (p==='admin')         return { page:'admin' };
-    return { page:'home' };
-  }
-  function navigate(){
-    const r=parseRoute();
-    if (r.page==='product') renderProduct({id:r.id});
-    else if (r.page==='categories') renderCategories();
-    else if (r.page==='admin') renderAdmin();
-    else renderHome();
-  }
-  window.addEventListener('hashchange', navigate);
-
-  // Wiring
-  function wireCardButtons(){
-    document.querySelectorAll('[data-add]').forEach(btn=>{ btn.onclick = ()=> addToCart(btn.getAttribute('data-add')); });
-    document.getElementById('themeBtn')?.addEventListener('click', ()=> {
-      document.documentElement.classList.toggle('light');
-    });
-    updateCartUI();
-  }
-
-  // Start
-  (async function(){
-    try {
-      await loadAll();
-      navigate();
-      updateCartUI();
-    } catch(e){
-      console.error(e);
-      els.root.innerHTML = `<div style="padding:16px"><h3>Could not load data.</h3><p>${esc(e.message||e)}</p></div>`;
-    }
-  })();
-
-})();
+/* =========================
+   4) Boot
+   ========================= */
+document.addEventListener('DOMContentLoaded', render);
